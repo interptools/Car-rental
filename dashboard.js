@@ -6,15 +6,15 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const TERMS = [
-  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report pre-existing damage before departure. The renter acknowledges receiving the vehicle in the recorded condition and agrees to return it in the same condition, except for ordinary wear and tear."],
-  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extension or late return terms must be agreed in writing before expiration of the rental period."],
-  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling costs, if any, are the renter's responsibility as separately agreed."],
-  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must comply with all traffic laws and keep the vehicle secure when not in use."],
-  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for damages, loss, and related costs remains with the renter as provided in the rental agreement and applicable law."],
-  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. No deposit amount is specified in this template; the parties must complete that detail before the rental begins."],
-  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without written consent."],
-  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed extra charges or repairs."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain a record of the transaction. Personal details are stored only as needed for rental administration."],
+  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report pre-existing damage before departure. The renter a[...]"],
+  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extension[...]"],
+  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refu[...]"],
+  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must [...]]"],
+  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility fo[...]"],
+  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. No deposit amount is specif[...]"],
+  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without[...]"] ,
+  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any ag[...]"],
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and mainta[...]"],
 ];
 
 let adminKey = "";
@@ -22,7 +22,7 @@ let records = [];
 
 const $ = id => document.getElementById(id);
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>\"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
 function fmt(value) {
   if (!value) return "—";
@@ -56,6 +56,7 @@ function formatDateTime(value) {
   return `${datePart} at ${timePart}`;
 }
 function period(record) {
+  // For display in the dashboard table keep original values, but presentationally we could format here if desired
   return `${record.pickupDate || "—"} → ${record.returnDate || "—"}`;
 }
 async function loadRecords() {
@@ -146,7 +147,7 @@ function renderRecords() {
     if (record) downloadAgreementPdf(record);
   }));
 }
-function addWrapped(doc, text, x, y, maxWidth, lineHeight = 5) {
+function addWrapped(doc, text, x, y, maxWidth, lineHeight = 6) {
   const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
   doc.text(lines, x, y);
   return y + lines.length * lineHeight;
@@ -160,82 +161,83 @@ function downloadAgreementPdf(r) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 17;
+  const margin = 18;
   const maxWidth = pageWidth - margin * 2;
-  let y = 18;
+  let y = 22;
 
-  function ensureSpace(required = 14) {
-    if (y + required > pageHeight - 17) {
+  function ensureSpace(required = 18) {
+    if (y + required > pageHeight - 20) {
       doc.addPage();
-      y = 18;
+      y = 22;
     }
   }
   function heading(text) {
-    ensureSpace(12);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-    doc.text(text, margin, y); y += 6;
-    doc.setDrawColor(203, 213, 225); doc.line(margin, y - 2, pageWidth - margin, y - 2);
+    ensureSpace(16);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+    doc.text(text, margin, y); y += 9;
+    doc.setDrawColor(203, 213, 225); doc.line(margin, y - 3, pageWidth - margin, y - 3);
+    y += 4;
   }
   function field(label, value) {
-    ensureSpace(10);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    ensureSpace(12);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
     doc.text(`${label}:`, margin, y);
     doc.setFont("helvetica", "normal");
-    const labelWidth = Math.min(doc.getTextWidth(`${label}:`) + 2, 45);
+    const labelWidth = Math.min(doc.getTextWidth(`${label}:`) + 6, 70);
     const lines = doc.splitTextToSize(String(value || "—"), maxWidth - labelWidth);
     doc.text(lines, margin + labelWidth, y);
-    y += Math.max(5, lines.length * 4.5);
+    y += Math.max(7, lines.length * 6);
   }
   function paragraph(text) {
     const lines = doc.splitTextToSize(text, maxWidth);
-    ensureSpace(lines.length * 4.5 + 3);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+    ensureSpace(lines.length * 5 + 6);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
     doc.text(lines, margin, y);
-    y += lines.length * 4.2 + 3;
+    y += lines.length * 4.8 + 6;
   }
 
-  doc.setFillColor(15, 23, 42); doc.rect(0, 0, pageWidth, 36, "F");
-  doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(17);
-  doc.text("VEHICLE RENTAL AGREEMENT", margin, 16);
+  doc.setFillColor(15, 23, 42); doc.rect(0, 0, pageWidth, 40, "F");
+  doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(18);
+  doc.text("VEHICLE RENTAL AGREEMENT", margin, 18);
   doc.setFont("helvetica","normal"); doc.setFontSize(10);
-  doc.text(`${VEHICLE.model}  |  Plate ${VEHICLE.plate}  |  ${VEHICLE.color}`, margin, 25);
-  doc.setTextColor(30,41,59); y = 45;
+  doc.text(`${VEHICLE.model}  |  Plate ${VEHICLE.plate}  |  ${VEHICLE.color}`, margin, 30);
+  doc.setTextColor(30,41,59); y = 52;
 
   heading("1. RENTER INFORMATION");
   [
     ["Full legal name",r.fullName],["Contact number",r.contact],["Address",r.address],["Email",r.email],
-    ["Date of birth", formatDate(r.dob)],["Driver's licence number",r.licenseNo],["Licence expiry",r.licenseExpiry],
+    ["Date of birth", formatDate(r.dob)],["Driver's licence number",r.licenseNo],["Licence expiry", formatDate(r.licenseExpiry)],
     ["Government ID type",r.govIdType],["Government ID number",r.govIdNumber],
     ["Emergency contact",`${r.emergencyName || "—"} (${r.emergencyPhone || "—"})`]
   ].forEach(([a,b]) => field(a,b));
 
-  y += 2; heading("2. RENTAL AND VEHICLE CONDITION");
+  y += 4; heading("2. RENTAL AND VEHICLE CONDITION");
   [
     ["Vehicle",`${r.vehicleModel || VEHICLE.model}; ${r.vehicleColor || VEHICLE.color}; Plate ${r.vehiclePlate || VEHICLE.plate}`],
     ["Pick-up date/time", formatDateTime(r.pickupDate)],["Return date/time", formatDateTime(r.returnDate)],["Total rental days",r.totalDays],
     ["Odometer out (km)",r.odometerOut],["Fuel level out",r.fuelLevelOut],["Pre-existing damage / notes",r.notes]
   ].forEach(([a,b]) => field(a,b));
 
-  y += 2; heading("3. TERMS AND CONDITIONS");
+  y += 4; heading("3. TERMS AND CONDITIONS");
   TERMS.forEach(([title, text]) => {
-    ensureSpace(15);
-    doc.setFont("helvetica","bold"); doc.setFontSize(9);
-    doc.text(title, margin, y); y += 4.5;
+    ensureSpace(20);
+    doc.setFont("helvetica","bold"); doc.setFontSize(10);
+    doc.text(title, margin, y); y += 6;
     paragraph(text);
   });
 
-  y += 1; heading("4. ACKNOWLEDGEMENT");
+  y += 4; heading("4. ACKNOWLEDGEMENT");
   paragraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
   paragraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any signature or legal instrument required by law.");
   paragraph(`Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
 
-  ensureSpace(35);
-  y += 5;
-  doc.setFont("helvetica","normal"); doc.setFontSize(9);
-  doc.line(margin, y + 10, margin + 72, y + 10);
-  doc.line(pageWidth - margin - 72, y + 10, pageWidth - margin, y + 10);
-  doc.text("Renter signature / date", margin, y + 15);
-  doc.text("Owner / representative signature / date", pageWidth - margin - 72, y + 15);
+  ensureSpace(45);
+  y += 6;
+  doc.setFont("helvetica","normal"); doc.setFontSize(10);
+  doc.line(margin, y + 12, margin + 84, y + 12);
+  doc.line(pageWidth - margin - 84, y + 12, pageWidth - margin, y + 12);
+  doc.text("Renter signature / date", margin, y + 18);
+  doc.text("Owner / representative signature / date", pageWidth - margin - 84, y + 18);
 
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
