@@ -7,15 +7,83 @@
   <title>Owner Dashboard | Rental Records</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body{background:#f1f5f9}.field{width:100%;border:1px solid #cbd5e1;border-radius:.6rem;padding:.65rem .75rem;background:white}
+    /* Base styles */
+    body{background:#f1f5f9}
+    .field{width:100%;border:1px solid #cbd5e1;border-radius:.6rem;padding:.65rem .75rem;background:white}
     th,td{padding:.8rem .9rem;text-align:left;vertical-align:top;border-bottom:1px solid #e2e8f0}
+
+    /* 1) Text wrapping: ensure terms and long paragraphs fully wrap and never truncate */
+    /* Defensive rules to avoid accidental truncation from other styles */
+    .terms, .terms p, .terms div, .agreement, .agreement p {
+      white-space: normal !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
+      max-height: none !important;
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    /* 2) Signature layout: clean two-column flex with visible lines */
+    .signature-block {
+      display: flex;
+      gap: 2.5rem;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      align-items: flex-end;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .signature {
+      flex: 1 1 45%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+    .signature .sig-line {
+      width: 100%;
+      border-bottom: 1px solid #0f172a;
+      height: 0.6rem;
+    }
+    .signature .sig-label {
+      font-size: 0.875rem;
+      color: #334155;
+    }
+
+    /* 3) Label alignment: grid for label/value pairs */
+    .field-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr; /* label column fixed, value column flexible */
+      column-gap: 1rem;
+      row-gap: 0.5rem;
+      align-items: start;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .field-grid .label {
+      font-weight: 600;
+      color: #0f172a;
+      padding-right: 0.25rem;
+    }
+    .field-grid .value {
+      color: #0f172a;
+      word-wrap: break-word;
+      white-space: normal;
+    }
+
+    /* Print-friendly tweaks for any HTML->PDF printing flows */
+    @media print {
+      .field, input, button { box-shadow: none !important; }
+      .signature .sig-line { border-bottom-width: 1px; }
+    }
+
   </style>
 </head>
 <body class="text-slate-800">
   <header class="bg-slate-900 text-white">
     <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <div><p class="text-sky-300 text-xs uppercase tracking-widest font-bold">Owner access</p><h1 class="text-2xl font-bold mt-1">Rental Records Dashboard</h1><p class="text-slate-300 text-sm mt-1">MG ZS Lux 2025 · GBJ 3556 · Black</p></div>
-      <div class="flex gap-2"><button id="refreshBtn" class="rounded-lg bg-sky-600 hover:bg-sky-700 px-4 py-2 font-semibold">Refresh records</button><button id="logoutBtn" class="rounded-lg bg-slate-700 hover:bg-slate-600 px-4 py-2">Lock dashboard</button></div>
+      <div><p class="text-sky-300 text-xs uppercase tracking-widest font-bold">Owner access</p><h1 class="text-2xl font-bold mt-1">Rental Records Dashboard</h1><p class="text-slate-300 text-sm mt-1">Manage rental records and download agreements.</p></div>
+      <div class="flex gap-2"><button id="refreshBtn" class="rounded-lg bg-sky-600 hover:bg-sky-700 px-4 py-2 font-semibold">Refresh records</button><button id="logoutBtn" class="rounded-lg bg-slate-700 hover:bg-slate-800 px-4 py-2 font-semibold">Lock dashboard</button></div>
     </div>
   </header>
   <main class="max-w-7xl mx-auto p-4 md:py-8">
@@ -47,8 +115,44 @@
           </table>
         </div>
       </div>
-      <p class="text-xs text-slate-500 mt-4">Customer identity and licence information are sensitive. Keep this dashboard key private and restrict spreadsheet access. This dashboard does not replace proper identity verification or legal review.</p>
+      <p class="text-xs text-slate-500 mt-4">Customer identity and licence information are sensitive. Keep this dashboard key private and restrict spreadsheet access. This dashboard does not replace proper recordkeeping or signing procedures.</p>
     </section>
+
+    <!-- Agreement HTML template: hidden by default but useful if you render the agreement as HTML before converting to PDF -->
+    <div id="agreementTemplate" style="display:none;" aria-hidden="true">
+      <article class="agreement bg-white p-6 rounded-lg shadow-sm max-w-3xl mx-auto">
+        <header>
+          <h1 style="font-size:18px;margin:0 0 6px">VEHICLE RENTAL AGREEMENT</h1>
+          <div style="font-size:12px;color:#334155;margin-bottom:12px">MG ZS Lux 2025 | Plate GBJ 3556 | Black</div>
+        </header>
+
+        <section class="agreement-meta field-grid" style="margin-bottom:12px">
+          <div class="label">Full legal name</div><div class="value">[Full name]</div>
+          <div class="label">Contact number</div><div class="value">[Phone]</div>
+          <div class="label">Address</div><div class="value">[Address]</div>
+          <div class="label">Email</div><div class="value">[Email]</div>
+          <div class="label">Date of birth</div><div class="value">October 26, 2000</div>
+          <div class="label">Driver's licence number</div><div class="value">[Licence]</div>
+          <div class="label">Licence expiry</div><div class="value">October 26, 2026</div>
+        </section>
+
+        <section class="terms" style="margin-bottom:12px">
+          <h2 style="margin:0 0 8px;font-size:14px">Terms and Conditions</h2>
+          <p style="margin:0 0 8px;line-height:1.4">The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter agrees to return the vehicle in the same condition except for reasonable wear and tear. The rental period begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time. Extensions must be agreed in writing. Fuel policy and security deposit terms are the renter's responsibility as separately agreed.</p>
+        </section>
+
+        <section class="signature-block">
+          <div class="signature">
+            <div class="sig-line" aria-hidden="true"></div>
+            <div class="sig-label">Renter signature / date</div>
+          </div>
+          <div class="signature">
+            <div class="sig-line" aria-hidden="true"></div>
+            <div class="sig-label">Owner / representative signature / date</div>
+          </div>
+        </section>
+      </article>
+    </div>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="dashboard.js"></script>
