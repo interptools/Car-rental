@@ -232,10 +232,13 @@ function downloadAgreementPdf(r) {
   doc.setFontSize(18);
   doc.text("VEHICLE RENTAL AGREEMENT", margin, 18);
 
-  doc.setTextColor(0, 0, 0);
+  // make vehicle line white so it's visible on the dark header
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(`${VEHICLE.model} | Plate ${VEHICLE.plate} | ${VEHICLE.color}`, margin, 30);
+
+  // switch back to black for the rest of the document
+  doc.setTextColor(0, 0, 0);
 
   y = 52;
 
