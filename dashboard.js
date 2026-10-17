@@ -90,7 +90,7 @@ function requestRecordsJsonp() {
     document.head.appendChild(script);
   });
 }
-\nfunction renderRecords() {
+function renderRecords() {
   const query = $("searchInput").value.trim().toLowerCase();
   const filtered = records.filter(r => [r.fullName,r.contact,r.email,r.vehiclePlate,r.licenseNo].some(v => String(v || "").toLowerCase().includes(query)));
   $("totalRecords").textContent = records.length;
