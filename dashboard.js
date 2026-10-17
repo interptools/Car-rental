@@ -22,7 +22,7 @@ let records = [];
 
 const $ = id => document.getElementById(id);
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  return String(value ?? "").replace(/[&<>\"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
 function fmt(value) {
   if (!value) return "—";
@@ -137,8 +137,8 @@ function renderRecords() {
       <td>${escapeHtml(r.contact || "—")}</td>
       <td>${escapeHtml(period(r))}</td>
       <td>${escapeHtml(r.totalDays || "—")}</td>
-      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div><div class="text-xs text-slate-500">${escapeHtml(r.licenseNo || "")}</div></td>
-      <td><span class="rounded-full px-2 py-1 text-xs ${String(r.agreementAccepted).toLowerCase()==="yes"?"bg-green-100 text-green-800":"bg-red-100 text-red-800"}">${escapeHtml(r.agreementAccepted || "No")}</span></td>
+      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div><[...]
+      <td><span class="rounded-full px-2 py-1 text-xs ${String(r.agreementAccepted).toLowerCase()==="yes"?"bg-green-100 text-green-800":"bg-red-100 text-red-800"}">${escapeHtml(r.agreementAccepte[...]
       <td><button class="pdfBtn rounded-lg bg-slate-900 hover:bg-slate-700 text-white px-3 py-2 whitespace-nowrap" data-index="${index}">Download Agreement PDF</button></td>
     </tr>`;
   }).join("");
@@ -157,94 +157,128 @@ function downloadAgreementPdf(r) {
     alert("PDF library did not load. Check your internet connection and CDN access.");
     return;
   }
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 18;
+  const margin = 16;
   const maxWidth = pageWidth - margin * 2;
+  const labelWidth = 62;
   let y = 22;
 
-  function ensureSpace(required = 18) {
-    if (y + required > pageHeight - 20) {
+  function ensureSpace(required = 12) {
+    if (y + required > pageHeight - 18) {
       doc.addPage();
       y = 22;
     }
   }
-  function heading(text) {
-    ensureSpace(16);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-    doc.text(text, margin, y); y += 9;
-    doc.setDrawColor(203, 213, 225); doc.line(margin, y - 3, pageWidth - margin, y - 3);
-    y += 4;
-  }
-  function field(label, value) {
-    ensureSpace(12);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+
+  function addField(label, value) {
+    ensureSpace(10);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
     doc.text(`${label}:`, margin, y);
+
     doc.setFont("helvetica", "normal");
-    const labelWidth = Math.min(doc.getTextWidth(`${label}:`) + 6, 70);
-    const lines = doc.splitTextToSize(String(value || "—"), maxWidth - labelWidth);
+    doc.setFontSize(9);
+    const lines = doc.splitTextToSize(String(value ?? "—"), maxWidth - labelWidth - 4);
     doc.text(lines, margin + labelWidth, y);
-    y += Math.max(7, lines.length * 6);
+    y += Math.max(6, lines.length * 5);
   }
-  function paragraph(text) {
-    const lines = doc.splitTextToSize(text, maxWidth);
-    ensureSpace(lines.length * 5 + 6);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+
+  function addParagraph(text) {
+    const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
+    ensureSpace(lines.length * 5 + 5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
     doc.text(lines, margin, y);
-    y += lines.length * 4.8 + 6;
+    y += lines.length * 5 + 5;
   }
 
-  doc.setFillColor(15, 23, 42); doc.rect(0, 0, pageWidth, 40, "F");
-  doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(18);
+  function addSectionTitle(title) {
+    ensureSpace(14);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    doc.text(title, margin, y);
+    y += 7;
+    doc.setDrawColor(203, 213, 225);
+    doc.line(margin, y - 2, pageWidth - margin, y - 2);
+    y += 5;
+  }
+
+  function addSignatureBlock() {
+    const sigY = y + 8;
+    const leftX = margin;
+    const rightX = pageWidth - margin - 70;
+    const lineLength = 70;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+
+    doc.line(leftX, sigY, leftX + lineLength, sigY);
+    doc.line(rightX, sigY, rightX + lineLength, sigY);
+
+    doc.text("Renter signature / date", leftX, sigY + 7);
+    doc.text("Owner / representative signature / date", rightX, sigY + 7);
+  }
+
+  // header
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, pageWidth, 38, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
   doc.text("VEHICLE RENTAL AGREEMENT", margin, 18);
-  doc.setFont("helvetica","normal"); doc.setFontSize(10);
-  doc.text(`${VEHICLE.model}  |  Plate ${VEHICLE.plate}  |  ${VEHICLE.color}`, margin, 30);
-  doc.setTextColor(30,41,59); y = 52;
 
-  heading("1. RENTER INFORMATION");
-  [
-    ["Full legal name",r.fullName],["Contact number",r.contact],["Address",r.address],["Email",r.email],
-    ["Date of birth", formatDate(r.dob)],["Driver's licence number",r.licenseNo],["Licence expiry", formatDate(r.licenseExpiry)],
-    ["Government ID type",r.govIdType],["Government ID number",r.govIdNumber],
-    ["Emergency contact",`${r.emergencyName || "—"} (${r.emergencyPhone || "—"})`]
-  ].forEach(([a,b]) => field(a,b));
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`${VEHICLE.model} | Plate ${VEHICLE.plate} | ${VEHICLE.color}`, margin, 30);
 
-  y += 4; heading("2. RENTAL AND VEHICLE CONDITION");
-  [
-    ["Vehicle",`${r.vehicleModel || VEHICLE.model}; ${r.vehicleColor || VEHICLE.color}; Plate ${r.vehiclePlate || VEHICLE.plate}`],
-    ["Pick-up date/time", formatDateTime(r.pickupDate)],["Return date/time", formatDateTime(r.returnDate)],["Total rental days",r.totalDays],
-    ["Odometer out (km)",r.odometerOut],["Fuel level out",r.fuelLevelOut],["Pre-existing damage / notes",r.notes]
-  ].forEach(([a,b]) => field(a,b));
+  y = 52;
 
-  y += 4; heading("3. TERMS AND CONDITIONS");
+  addSectionTitle("1. RENTER INFORMATION");
+  addField("Full legal name", r.fullName);
+  addField("Contact number", r.contact);
+  addField("Address", r.address);
+  addField("Email", r.email);
+  addField("Date of birth", formatDate(r.dob));
+  addField("Driver's licence number", r.licenseNo);
+  addField("Licence expiry", formatDate(r.licenseExpiry));
+  addField("Government ID type", r.govIdType);
+  addField("Government ID number", r.govIdNumber);
+  addField("Emergency contact", `${r.emergencyName || "—"} (${r.emergencyPhone || "—"})`);
+
+  y += 4;
+  addSectionTitle("2. RENTAL AND VEHICLE CONDITION");
+  addField("Vehicle", `${r.vehicleModel || VEHICLE.model}; ${r.vehicleColor || VEHICLE.color}; Plate ${r.vehiclePlate || VEHICLE.plate}`);
+  addField("Pick-up date/time", formatDateTime(r.pickupDate));
+  addField("Return date/time", formatDateTime(r.returnDate));
+  addField("Total rental days", r.totalDays);
+  addField("Odometer out (km)", r.odometerOut);
+  addField("Fuel level out", r.fuelLevelOut);
+  addField("Pre-existing damage / notes", r.notes);
+
+  y += 4;
+  addSectionTitle("3. TERMS AND CONDITIONS");
   TERMS.forEach(([title, text]) => {
-    ensureSpace(20);
-    doc.setFont("helvetica","bold"); doc.setFontSize(10);
-    doc.text(title, margin, y); y += 6;
-    paragraph(text);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(title, margin, y);
+    y += 6;
+    addParagraph(text);
   });
 
-  y += 4; heading("4. ACKNOWLEDGEMENT");
-  paragraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
-  paragraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any signature or legal instrument required by law.");
-  paragraph(`Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
+  y += 4;
+  addSectionTitle("4. ACKNOWLEDGEMENT");
+  addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
+  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any signature or legal instrument required by law.");
+  addParagraph(`Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
 
-  ensureSpace(45);
-  y += 6;
-  doc.setFont("helvetica","normal"); doc.setFontSize(10);
-  doc.line(margin, y + 12, margin + 84, y + 12);
-  doc.line(pageWidth - margin - 84, y + 12, pageWidth - margin, y + 12);
-  doc.text("Renter signature / date", margin, y + 18);
-  doc.text("Owner / representative signature / date", pageWidth - margin - 84, y + 18);
+  addSignatureBlock();
 
-  const pages = doc.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i); doc.setFontSize(8); doc.setTextColor(100,116,139);
-    doc.text(`Rental agreement · ${VEHICLE.plate}`, margin, pageHeight - 8);
-    doc.text(`Page ${i} of ${pages}`, pageWidth - margin, pageHeight - 8, { align: "right" });
-  }
   const safeName = String(r.fullName || "renter").replace(/[^a-z0-9_-]+/gi, "_").slice(0,50);
   doc.save(`Rental_Agreement_${safeName}_${String(r.timestamp || "").slice(0,10) || "record"}.pdf`);
 }
