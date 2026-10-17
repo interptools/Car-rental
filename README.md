@@ -39,7 +39,7 @@ The script creates a `Rental Records` tab and its header row automatically on th
 Open `app.js` and `dashboard.js`. In each file, replace:
 
 ```js
-const APPS_SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 ```
 
 with your deployed `/exec` URL. Use the same URL in both files.
@@ -66,7 +66,7 @@ The customer form sends a `text/plain` POST with `mode: "no-cors"` because brows
 3. Open **Settings → Pages**.
 4. Under build and deployment, choose **Deploy from a branch**.
 5. Select the `main` branch and `/ (root)`, then save.
-6. Wait for GitHub Pages to publish. The customer form is usually at `https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/`; the dashboard is `https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/dashboard.html`.
+6. Wait for GitHub Pages to publish. The customer form is usually at `https://interptools.github.io/Car-rental/`; the dashboard is `https://interptools.github.io/Car-rental/dashboard.html`.
 
 GitHub Pages is public hosting. Do not put passwords, private keys, customer data, or other secrets in the repository.
 
