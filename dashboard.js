@@ -14,7 +14,7 @@ const TERMS = [
   ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, or unpaid fees will be detailed and documented by the owner."],
   ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without prior written permission."],
   ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain records in connection with the rental and any related claims. The owner will handle personal data in accordance with applicable privacy rules."],
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain records in connection with the rental and any related claims. The owner will handle personal data in accordance with applicable privacy rules."]
 ];
 
 let adminKey = "";
@@ -147,7 +147,7 @@ function renderRecords() {
     if (record) downloadAgreementPdf(record);
   }));
 }
-function addWrapped(doc, text, x, y, maxWidth, lineHeight = 6) {
+function addWrapped(doc, text, x, y, maxWidth, lineHeight = 5) {
   const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
   doc.text(lines, x, y);
   return y + lines.length * lineHeight;
@@ -163,65 +163,65 @@ function downloadAgreementPdf(r) {
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 16;
+  const margin = 14; // slightly smaller margin to fit more content
   const maxWidth = pageWidth - margin * 2;
-  const labelWidth = 62;
-  let y = 22;
+  const labelWidth = 56; // smaller label column
+  let y = 18; // move content up to fit more
 
-  function ensureSpace(required = 12) {
-    if (y + required > pageHeight - 18) {
+  function ensureSpace(required = 10) {
+    if (y + required > pageHeight - 14) {
       doc.addPage();
-      y = 22;
+      y = 18;
     }
   }
 
   function addField(label, value) {
-    ensureSpace(10);
+    ensureSpace(8);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.text(`${label}:`, margin, y);
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     const lines = doc.splitTextToSize(String(value ?? "—"), maxWidth - labelWidth - 4);
     doc.text(lines, margin + labelWidth, y);
-    y += Math.max(6, lines.length * 5);
+    y += Math.max(5, lines.length * 4);
   }
 
   function addParagraph(text) {
     const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
-    ensureSpace(lines.length * 5 + 5);
+    ensureSpace(lines.length * 4 + 4);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.text(lines, margin, y);
-    y += lines.length * 5 + 5;
+    y += lines.length * 4 + 4;
   }
 
   function addSectionTitle(title) {
-    ensureSpace(14);
+    ensureSpace(12);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11.5);
+    doc.setFontSize(10);
     doc.text(title, margin, y);
-    y += 7;
+    y += 6;
     doc.setDrawColor(203, 213, 225);
     doc.line(margin, y - 2, pageWidth - margin, y - 2);
-    y += 5;
+    y += 4;
   }
 
   function addSignatureBlock() {
-    const sigY = y + 8;
+    const sigY = y + 6;
     const leftX = margin;
     const rightX = pageWidth - margin - 70;
     const lineLength = 70;
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(8);
 
     doc.line(leftX, sigY, leftX + lineLength, sigY);
     doc.line(rightX, sigY, rightX + lineLength, sigY);
 
-    doc.text("Renter signature / date", leftX, sigY + 7);
-    doc.text("Owner / representative signature / date", rightX, sigY + 7);
+    doc.text("Renter signature / date", leftX, sigY + 6);
+    doc.text("Owner / representative signature / date", rightX, sigY + 6);
   }
 
   function addAgreementSummary() {
@@ -236,21 +236,21 @@ function downloadAgreementPdf(r) {
 
   // header
   doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, pageWidth, 38, "F");
+  doc.rect(0, 0, pageWidth, 34, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("VEHICLE RENTAL AGREEMENT", margin, 18);
+  doc.setFontSize(16);
+  doc.text("VEHICLE RENTAL AGREEMENT", margin, 16);
 
   // make vehicle line white so it's visible on the dark header
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`${r.vehicleModel || VEHICLE.model} | Plate ${r.vehiclePlate || VEHICLE.plate} | ${r.vehicleColor || VEHICLE.color}`, margin, 30);
+  doc.setFontSize(9);
+  doc.text(`${r.vehicleModel || VEHICLE.model} | Plate ${r.vehiclePlate || VEHICLE.plate} | ${r.vehicleColor || VEHICLE.color}`, margin, 26);
 
   // switch back to black for the rest of the document
   doc.setTextColor(0, 0, 0);
 
-  y = 52;
+  y = 40;
 
   addSectionTitle("1. RENTER INFORMATION");
   addField("Full legal name", r.fullName);
@@ -264,32 +264,37 @@ function downloadAgreementPdf(r) {
   addField("Government ID number", r.govIdNumber);
   addField("Emergency contact", `${r.emergencyName || "—"} (${r.emergencyPhone || "—"})`);
 
-  y += 4;
+  y += 2;
   addSectionTitle("2. RENTAL AND VEHICLE CONDITION");
   addField("Vehicle", `${r.vehicleModel || VEHICLE.model}; ${r.vehicleColor || VEHICLE.color}; Plate ${r.vehiclePlate || VEHICLE.plate}`);
   addField("Pick-up date/time", formatDateTime(r.pickupDate));
   addField("Return date/time", formatDateTime(r.returnDate));
   addField("Total rental days", r.totalDays);
+  // blank line for manual rent price entry
+  addField("Agreed rent (PHP)", "__________________________");
   addField("Odometer out (km)", r.odometerOut);
   addField("Fuel level out", r.fuelLevelOut);
   addField("Pre-existing damage / notes", r.notes);
 
-  y += 4;
+  y += 2;
   addSectionTitle("3. TERMS AND CONDITIONS");
+  // render terms more compactly to help fit into two pages
   TERMS.forEach(([title, text]) => {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.text(title, margin, y);
-    y += 6;
+    y += 5;
+    // use a slightly smaller paragraph font here
     addParagraph(text);
   });
 
-  y += 4;
+  y += 2;
   addSectionTitle("4. ACKNOWLEDGEMENT");
   addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
   addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical signature or legally executed deed unless separately signed and witnessed in writing.");
   addParagraph(`Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
 
+  // summary and signature; ensure summary is concise to keep within two pages
   addAgreementSummary();
   addSignatureBlock();
 
