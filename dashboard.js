@@ -12,9 +12,9 @@ const TERMS = [
   ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving."],
   ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures."],
   ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover."],
-  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without explicit permission."],
+  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without prior written permission."],
   ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain records in accordance with applicable law."]
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain records in connection with the rental and any related claims."],
 ];
 
 let adminKey = "";
@@ -224,6 +224,16 @@ function downloadAgreementPdf(r) {
     doc.text("Owner / representative signature / date", rightX, sigY + 7);
   }
 
+  function addAgreementSummary() {
+    addSectionTitle("5. COMPLETE AGREEMENT SUMMARY");
+    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"}, agrees to the full terms in this document and confirms that the vehicle condition, dates, and obligations were reviewed before acceptance.`);
+    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: ${r.fuelLevelOut || "—"}.`);
+    addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"}).`);
+    addParagraph(`Driver's licence: ${r.licenseNo || "—"}; expiry ${formatDate(r.licenseExpiry)}. Government ID: ${r.govIdType || "—"} ${r.govIdNumber || "—"}.`);
+    addParagraph(`Pre-existing damage / notes: ${r.notes || "No additional notes recorded."}`);
+    addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}. Terms version: ${r.termsVersion || "1.0"}.`);
+  }
+
   // header
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, pageWidth, 38, "F");
@@ -235,7 +245,7 @@ function downloadAgreementPdf(r) {
   // make vehicle line white so it's visible on the dark header
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text(`${VEHICLE.model} | Plate ${VEHICLE.plate} | ${VEHICLE.color}`, margin, 30);
+  doc.text(`${r.vehicleModel || VEHICLE.model} | Plate ${r.vehiclePlate || VEHICLE.plate} | ${r.vehicleColor || VEHICLE.color}`, margin, 30);
 
   // switch back to black for the rest of the document
   doc.setTextColor(0, 0, 0);
@@ -277,9 +287,10 @@ function downloadAgreementPdf(r) {
   y += 4;
   addSectionTitle("4. ACKNOWLEDGEMENT");
   addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
-  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical signature where required by law.");
+  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical signature or legally executed deed unless separately signed and witnessed in writing.");
   addParagraph(`Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
 
+  addAgreementSummary();
   addSignatureBlock();
 
   const safeName = String(r.fullName || "renter").replace(/[^a-z0-9_-]+/gi, "_").slice(0,50);
