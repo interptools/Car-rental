@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Owner Dashboard | Rental Records</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{background:#f1f5f9}.field{width:100%;border:1px solid #cbd5e1;border-radius:.6rem;padding:.65rem .75rem;background:white}
+    th,td{padding:.8rem .9rem;text-align:left;vertical-align:top;border-bottom:1px solid #e2e8f0}
+  </style>
+</head>
+<body class="text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div><p class="text-sky-300 text-xs uppercase tracking-widest font-bold">Owner access</p><h1 class="text-2xl font-bold mt-1">Rental Records Dashboard</h1><p class="text-slate-300 text-sm mt-1">MG ZS Lux 2025 · GBJ 3556 · Black</p></div>
+      <div class="flex gap-2"><button id="refreshBtn" class="rounded-lg bg-sky-600 hover:bg-sky-700 px-4 py-2 font-semibold">Refresh records</button><button id="logoutBtn" class="rounded-lg bg-slate-700 hover:bg-slate-600 px-4 py-2">Lock dashboard</button></div>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto p-4 md:py-8">
+    <div id="gate" class="max-w-xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+      <h2 class="text-xl font-bold">Owner sign-in</h2>
+      <p class="text-sm text-slate-600 mt-2">Enter the dashboard key configured in Google Apps Script project properties. Do not use a key that you use for another service.</p>
+      <form id="loginForm" class="mt-5 space-y-3">
+        <label class="block text-sm font-semibold" for="adminKey">Dashboard key</label>
+        <input id="adminKey" class="field" type="password" autocomplete="current-password" required>
+        <button class="w-full rounded-lg bg-slate-900 text-white font-bold py-3">Unlock dashboard</button>
+        <p id="loginStatus" class="text-sm text-red-700" role="status"></p>
+      </form>
+    </div>
+    <section id="dashboard" class="hidden">
+      <div class="grid sm:grid-cols-3 gap-4 mb-5">
+        <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-sm text-slate-500">Total records loaded</p><p id="totalRecords" class="text-2xl font-bold">0</p></div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-sm text-slate-500">Latest submission</p><p id="latestRecord" class="text-lg font-bold">—</p></div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-sm text-slate-500">Agreement accepted</p><p id="acceptedCount" class="text-2xl font-bold">0</p></div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+          <div><h2 class="font-bold text-lg">Submitted rental records</h2><p id="loadStatus" class="text-sm text-slate-500 mt-1" role="status">Unlock to load records.</p></div>
+          <input id="searchInput" class="field md:max-w-sm" placeholder="Search name, phone, email, or plate" aria-label="Search rental records">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-[1100px] w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600"><tr><th>Timestamp</th><th>Renter</th><th>Contact</th><th>Rental period</th><th>Days</th><th>Vehicle / plate</th><th>Accepted</th><th>PDF</th></tr></thead>
+            <tbody id="recordsBody"><tr><td colspan="8" class="text-slate-500">No records loaded.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mt-4">Customer identity and licence information are sensitive. Keep this dashboard key private and restrict spreadsheet access. This dashboard does not replace proper identity verification or legal review.</p>
+    </section>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

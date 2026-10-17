@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <title>Car Rental Agreement | MG ZS Lux 2025</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{background:#f1f5f9} .field{width:100%;border:1px solid #cbd5e1;border-radius:.6rem;padding:.65rem .75rem;background:white}
+    .field:focus{outline:2px solid #38bdf8;outline-offset:1px} label{font-size:.875rem;font-weight:600;color:#334155}
+  </style>
+</head>
+<body class="text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="max-w-5xl mx-auto px-4 py-6">
+      <p class="text-sky-300 uppercase tracking-widest text-xs font-bold">Vehicle rental</p>
+      <h1 class="text-2xl md:text-3xl font-bold mt-1">Rental Agreement & Customer Details</h1>
+      <p class="text-slate-300 mt-2">Please complete all required fields and review the rental terms before submitting.</p>
+    </div>
+  </header>
+  <main class="max-w-5xl mx-auto p-4 md:py-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+      <div class="grid md:grid-cols-[180px_1fr]">
+        <div class="bg-slate-100 flex items-center justify-center p-6"><span class="text-6xl" aria-hidden="true">🚙</span></div>
+        <div class="p-6">
+          <p class="text-xs uppercase tracking-widest text-slate-500 font-bold">Rental vehicle</p>
+          <h2 class="text-xl font-bold mt-1">MG ZS Lux 2025</h2>
+          <div class="flex flex-wrap gap-2 mt-3 text-sm">
+            <span class="rounded-full bg-slate-100 px-3 py-1">Plate: <strong>GBJ 3556</strong></span>
+            <span class="rounded-full bg-slate-100 px-3 py-1">Color: <strong>Black</strong></span>
+          </div>
+          <p class="text-sm text-slate-600 mt-3">Review the vehicle details and rental dates carefully. Submission records your acknowledgement; it does not by itself confirm availability or payment.</p>
+        </div>
+      </div>
+    </div>
+
+    <form id="rentalForm" class="space-y-6">
+      <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
+        <h2 class="text-lg font-bold mb-4">1. Renter information</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label for="fullName">Full legal name *</label><input class="field mt-1" id="fullName" name="fullName" autocomplete="name" required maxlength="150"></div>
+          <div><label for="contact">Contact number *</label><input class="field mt-1" id="contact" name="contact" type="tel" autocomplete="tel" required maxlength="40"></div>
+          <div class="md:col-span-2"><label for="address">Residential address *</label><textarea class="field mt-1" id="address" name="address" autocomplete="street-address" rows="2" required maxlength="500"></textarea></div>
+          <div><label for="email">Email address *</label><input class="field mt-1" id="email" name="email" type="email" autocomplete="email" required maxlength="254"></div>
+          <div><label for="dob">Date of birth *</label><input class="field mt-1" id="dob" name="dob" type="date" required></div>
+          <div><label for="licenseNo">Driver's license number *</label><input class="field mt-1" id="licenseNo" name="licenseNo" required maxlength="80"></div>
+          <div><label for="licenseExpiry">Driver's license expiry *</label><input class="field mt-1" id="licenseExpiry" name="licenseExpiry" type="date" required></div>
+          <div><label for="govIdType">Government ID type *</label>
+            <select class="field mt-1" id="govIdType" name="govIdType" required>
+              <option value="">Select ID type</option><option>Philippine Passport</option><option>UMID</option><option>PhilHealth ID</option><option>SSS ID</option><option>GSIS ID</option><option>National ID / PhilID</option><option>Voter's ID</option><option>PRC ID</option><option>Postal ID</option><option>Other government-issued ID</option>
+            </select>
+          </div>
+          <div><label for="govIdNumber">Government ID number *</label><input class="field mt-1" id="govIdNumber" name="govIdNumber" required maxlength="100"></div>
+          <div><label for="emergencyName">Emergency contact name *</label><input class="field mt-1" id="emergencyName" name="emergencyName" required maxlength="150"></div>
+          <div><label for="emergencyPhone">Emergency contact number *</label><input class="field mt-1" id="emergencyPhone" name="emergencyPhone" type="tel" required maxlength="40"></div>
+        </div>
+      </section>
+
+      <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
+        <h2 class="text-lg font-bold mb-4">2. Rental and vehicle condition</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label for="pickupDate">Pick-up date and time *</label><input class="field mt-1" id="pickupDate" name="pickupDate" type="datetime-local" required></div>
+          <div><label for="returnDate">Return date and time *</label><input class="field mt-1" id="returnDate" name="returnDate" type="datetime-local" required></div>
+          <div><label for="totalDays">Total rental days (calculated) *</label><input class="field mt-1 bg-slate-50" id="totalDays" name="totalDays" type="number" min="1" step="0.5" readonly required></div>
+          <div><label for="odometerOut">Odometer out (km) *</label><input class="field mt-1" id="odometerOut" name="odometerOut" type="number" min="0" step="1" required></div>
+          <div><label for="fuelLevelOut">Fuel level out *</label><select class="field mt-1" id="fuelLevelOut" name="fuelLevelOut" required><option value="">Select fuel level</option><option>Full</option><option>3/4</option><option>1/2</option><option>1/4</option><option>Low</option></select></div>
+          <div><label for="notes">Pre-existing damage / notes</label><textarea class="field mt-1" id="notes" name="notes" rows="2" maxlength="1000" placeholder="Describe existing scratches, dents, or other observations"></textarea></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Rental days are calculated as elapsed time rounded up to a whole day. Confirm the agreed billing rule with the owner if a different rule applies.</p>
+      </section>
+
+      <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
+        <h2 class="text-lg font-bold mb-3">3. Rental agreement terms</h2>
+        <p class="text-sm text-slate-600 mb-4">Read the terms below. These are a starter template and should be reviewed for your actual rental operation and applicable Philippine law before use.</p>
+        <div id="termsPreview" class="space-y-4 text-sm leading-6 max-h-[420px] overflow-auto border border-slate-200 rounded-xl p-4 bg-slate-50"></div>
+        <label class="flex gap-3 items-start mt-5 p-4 rounded-xl border border-sky-200 bg-sky-50">
+          <input id="agreementAccepted" name="agreementAccepted" type="checkbox" required class="mt-1 h-5 w-5 accent-sky-600">
+          <span class="font-semibold">I have read, understood, and agree to all terms and conditions of this rental agreement. *</span>
+        </label>
+        <p class="text-xs text-slate-500 mt-2">Only submit information you are authorized to provide. Your details and ID information will be stored in the owner's Google Sheet.</p>
+      </section>
+
+      <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <button id="submitBtn" type="submit" class="rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white font-bold px-6 py-3">Submit rental details</button>
+        <p id="formStatus" role="status" aria-live="polite" class="text-sm text-slate-600"></p>
+      </div>
+    </form>
+    <footer class="text-xs text-slate-500 py-8 text-center">Rental details are submitted to the rental operator. Do not use this form until the owner has configured the backend endpoint.</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
