@@ -6,15 +6,15 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const TERMS = [
-  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report pre-existing damage before departure. The renter must keep the vehicle secure and use it with reasonable care."],
-  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require the owner's prior approval and may incur additional charges under the separately agreed rate."],
-  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling or service charges, if applicable, must be disclosed and agreed by the parties."],
-  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, use seat belts, take reasonable precautions against theft, and promptly notify the owner of accidents, breakdowns, damage, or loss. The renter must not allow an unauthorized driver to operate the vehicle."],
-  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, deductibles, towing, or third-party claims depends on the facts, applicable law, insurance terms, and any separately signed written terms; this template does not create an automatic finding of liability."],
-  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. No deposit amount is specified by this form. Deductions should be itemized and supported by reasonable records, subject to applicable law."],
-  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's written consent. The renter must not remove, tamper with, or disable safety or tracking equipment."],
-  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges. Both parties should retain a copy of the completed condition record."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records. The owner should restrict access, secure the spreadsheet, retain information only as necessary, and comply with applicable privacy and data-protection requirements."]
+  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report pre-existing damage before departure. The renter acknowledges receiving the vehicle in the recorded condition and agrees to return it in the same condition, except for ordinary wear and tear."],
+  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extension or late return terms must be agreed in writing before expiration of the rental period."],
+  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling costs, if any, are the renter's responsibility as separately agreed."],
+  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must comply with all traffic laws and keep the vehicle secure when not in use."],
+  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for damages, loss, and related costs remains with the renter as provided in the rental agreement and applicable law."],
+  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. No deposit amount is specified in this template; the parties must complete that detail before the rental begins."],
+  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without written consent."],
+  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed extra charges or repairs."],
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain a record of the transaction. Personal details are stored only as needed for rental administration."],
 ];
 
 let adminKey = "";
@@ -22,12 +22,38 @@ let records = [];
 
 const $ = id => document.getElementById(id);
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  return String(value ?? "").replace(/[&<>\"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
 function fmt(value) {
   if (!value) return "—";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+}
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
+function formatDateTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  const datePart = date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+  const timePart = date.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+  return `${datePart} at ${timePart}`;
 }
 function period(record) {
   return `${record.pickupDate || "—"} → ${record.returnDate || "—"}`;
@@ -90,6 +116,7 @@ function requestRecordsJsonp() {
     document.head.appendChild(script);
   });
 }
+
 function renderRecords() {
   const query = $("searchInput").value.trim().toLowerCase();
   const filtered = records.filter(r => [r.fullName,r.contact,r.email,r.vehiclePlate,r.licenseNo].some(v => String(v || "").toLowerCase().includes(query)));
@@ -109,7 +136,7 @@ function renderRecords() {
       <td>${escapeHtml(r.contact || "—")}</td>
       <td>${escapeHtml(period(r))}</td>
       <td>${escapeHtml(r.totalDays || "—")}</td>
-      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div></td>
+      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div><div class="text-xs text-slate-500">${escapeHtml(r.licenseNo || "")}</div></td>
       <td><span class="rounded-full px-2 py-1 text-xs ${String(r.agreementAccepted).toLowerCase()==="yes"?"bg-green-100 text-green-800":"bg-red-100 text-red-800"}">${escapeHtml(r.agreementAccepted || "No")}</span></td>
       <td><button class="pdfBtn rounded-lg bg-slate-900 hover:bg-slate-700 text-white px-3 py-2 whitespace-nowrap" data-index="${index}">Download Agreement PDF</button></td>
     </tr>`;
@@ -177,7 +204,7 @@ function downloadAgreementPdf(r) {
   heading("1. RENTER INFORMATION");
   [
     ["Full legal name",r.fullName],["Contact number",r.contact],["Address",r.address],["Email",r.email],
-    ["Date of birth",r.dob],["Driver's licence number",r.licenseNo],["Licence expiry",r.licenseExpiry],
+    ["Date of birth", formatDate(r.dob)],["Driver's licence number",r.licenseNo],["Licence expiry",r.licenseExpiry],
     ["Government ID type",r.govIdType],["Government ID number",r.govIdNumber],
     ["Emergency contact",`${r.emergencyName || "—"} (${r.emergencyPhone || "—"})`]
   ].forEach(([a,b]) => field(a,b));
@@ -185,7 +212,7 @@ function downloadAgreementPdf(r) {
   y += 2; heading("2. RENTAL AND VEHICLE CONDITION");
   [
     ["Vehicle",`${r.vehicleModel || VEHICLE.model}; ${r.vehicleColor || VEHICLE.color}; Plate ${r.vehiclePlate || VEHICLE.plate}`],
-    ["Pick-up date/time",r.pickupDate],["Return date/time",r.returnDate],["Total rental days",r.totalDays],
+    ["Pick-up date/time", formatDateTime(r.pickupDate)],["Return date/time", formatDateTime(r.returnDate)],["Total rental days",r.totalDays],
     ["Odometer out (km)",r.odometerOut],["Fuel level out",r.fuelLevelOut],["Pre-existing damage / notes",r.notes]
   ].forEach(([a,b]) => field(a,b));
 
@@ -199,8 +226,8 @@ function downloadAgreementPdf(r) {
 
   y += 1; heading("4. ACKNOWLEDGEMENT");
   paragraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
-  paragraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any signature or additional document required by law or agreed by the parties.");
-  paragraph(`Record timestamp: ${r.timestamp || "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
+  paragraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any signature or legal instrument required by law.");
+  paragraph(`Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
 
   ensureSpace(35);
   y += 5;
