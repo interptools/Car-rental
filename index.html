@@ -21,11 +21,11 @@
       #termsPreview { max-height: none !important; overflow: visible !important; }
       .terms-print { display: block !important; }
       /* hide the scrollable preview when printing */
-      #termsPreview { display: none !important; }
+      /* no-op: termsPreview will now contain full content */
     }
 
     /* Avoid page-break inside important sections when printing */
-    #termsPrint section, #termsPreview section { page-break-inside: avoid; }
+    #termsPreview section { page-break-inside: avoid; }
 
     /* Small fixed control for forcing cache refresh (visible in-page) */
     #refreshAssetsBtn{position:fixed;right:14px;bottom:14px;background:#0ea5e9;color:#012;z-index:9999;border-radius:10px;padding:8px 12px;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
@@ -94,11 +94,8 @@
         <h2 class="text-lg font-bold mb-3">3. Rental agreement terms</h2>
         <p class="text-sm text-slate-600 mb-4">Read the terms below. These are a starter template and should be reviewed for your actual rental operation and applicable Philippine law before use.</p>
 
-        <!-- Scrollable preview shown on screen -->
-        <div id="termsPreview" class="space-y-4 text-sm leading-6 max-h-[420px] overflow-auto border border-slate-200 rounded-xl p-4 bg-slate-50"></div>
-
-        <!-- Print-only static terms: used when generating PDFs or printing when JS may not run -->
-        <div id="termsPrint" class="terms-print space-y-4 text-sm leading-6 border border-slate-200 rounded-xl p-4 bg-white">
+        <!-- Full terms present in the visible DOM so any renderer will capture them -->
+        <div id="termsPreview" class="space-y-4 text-sm leading-6 border border-slate-200 rounded-xl p-4 bg-slate-50">
           <section>
             <h3 class="font-bold text-slate-900">Vehicle Details</h3>
             <p>The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must keep the vehicle secure and use it with reasonable care.</p>
@@ -143,7 +140,6 @@
             <h3 class="font-bold text-slate-900">Privacy and Recordkeeping</h3>
             <p>The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records. The owner should restrict access, secure the spreadsheet, retain information only as necessary, and comply with applicable privacy and data-protection requirements.</p>
           </section>
-
         </div>
 
         <label class="flex gap-3 items-start mt-5 p-4 rounded-xl border border-sky-200 bg-sky-50">
