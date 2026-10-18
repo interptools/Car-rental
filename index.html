@@ -9,6 +9,18 @@
   <style>
     body{background:#f1f5f9} .field{width:100%;border:1px solid #cbd5e1;border-radius:.6rem;padding:.65rem .75rem;background:white}
     .field:focus{outline:2px solid #38bdf8;outline-offset:1px} label{font-size:.875rem;font-weight:600;color:#334155}
+
+    /* Ensure print shows full terms instead of the scrollable preview */
+    .terms-print{display:none}
+    @media print {
+      #termsPreview { max-height: none !important; overflow: visible !important; }
+      .terms-print { display: block !important; }
+      /* hide the scrollable preview when printing */
+      #termsPreview { display: none !important; }
+    }
+
+    /* Avoid page-break inside important sections when printing */
+    #termsPrint section, #termsPreview section { page-break-inside: avoid; }
   </style>
 </head>
 <body class="text-slate-800">
@@ -41,14 +53,14 @@
         <div class="grid md:grid-cols-2 gap-4">
           <div><label for="fullName">Full legal name *</label><input class="field mt-1" id="fullName" name="fullName" autocomplete="name" required maxlength="150"></div>
           <div><label for="contact">Contact number *</label><input class="field mt-1" id="contact" name="contact" type="tel" autocomplete="tel" required maxlength="40"></div>
-          <div class="md:col-span-2"><label for="address">Residential address *</label><textarea class="field mt-1" id="address" name="address" autocomplete="street-address" rows="2" required maxlength="500"></textarea></div>
+          <div class="md:col-span-2"><label for="address">Residential address *</label><textarea class="field mt-1" id="address" name="address" autocomplete="street-address" rows="2" required maxlength="1000"></textarea></div>
           <div><label for="email">Email address *</label><input class="field mt-1" id="email" name="email" type="email" autocomplete="email" required maxlength="254"></div>
           <div><label for="dob">Date of birth *</label><input class="field mt-1" id="dob" name="dob" type="date" required></div>
           <div><label for="licenseNo">Driver's license number *</label><input class="field mt-1" id="licenseNo" name="licenseNo" required maxlength="80"></div>
           <div><label for="licenseExpiry">Driver's license expiry *</label><input class="field mt-1" id="licenseExpiry" name="licenseExpiry" type="date" required></div>
           <div><label for="govIdType">Government ID type *</label>
             <select class="field mt-1" id="govIdType" name="govIdType" required>
-              <option value="">Select ID type</option><option>Philippine Passport</option><option>UMID</option><option>PhilHealth ID</option><option>SSS ID</option><option>GSIS ID</option><option>National ID / PhilID</option><option>Voter's ID</option><option>PRC ID</option><option>Postal ID</option><option>Other government-issued ID</option>
+              <option value="">Select ID type</option><option>Philippine Passport</option><option>UMID</option><option>PhilHealth ID</option><option>SSS ID</option><option>GSIS ID</option><option>Other</option>
             </select>
           </div>
           <div><label for="govIdNumber">Government ID number *</label><input class="field mt-1" id="govIdNumber" name="govIdNumber" required maxlength="100"></div>
@@ -64,8 +76,8 @@
           <div><label for="returnDate">Return date and time *</label><input class="field mt-1" id="returnDate" name="returnDate" type="datetime-local" required></div>
           <div><label for="totalDays">Total rental days (calculated) *</label><input class="field mt-1 bg-slate-50" id="totalDays" name="totalDays" type="number" min="1" step="0.5" readonly required></div>
           <div><label for="odometerOut">Odometer out (km) *</label><input class="field mt-1" id="odometerOut" name="odometerOut" type="number" min="0" step="1" required></div>
-          <div><label for="fuelLevelOut">Fuel level out *</label><select class="field mt-1" id="fuelLevelOut" name="fuelLevelOut" required><option value="">Select fuel level</option><option>Full</option><option>3/4</option><option>1/2</option><option>1/4</option><option>Low</option></select></div>
-          <div><label for="notes">Pre-existing damage / notes</label><textarea class="field mt-1" id="notes" name="notes" rows="2" maxlength="1000" placeholder="Describe existing scratches, dents, or other observations"></textarea></div>
+          <div><label for="fuelLevelOut">Fuel level out *</label><select class="field mt-1" id="fuelLevelOut" name="fuelLevelOut" required><option value="">Select fuel level</option><option>Full</option><option>3/4</option><option>1/2</option><option>1/4</option><option>Empty</option></select></div>
+          <div><label for="notes">Pre-existing damage / notes</label><textarea class="field mt-1" id="notes" name="notes" rows="2" maxlength="1000" placeholder="Describe existing scratches, dents, or equipment issues."></textarea></div>
         </div>
         <p class="text-xs text-slate-500 mt-3">Rental days are calculated as elapsed time rounded up to a whole day. Confirm the agreed billing rule with the owner if a different rule applies.</p>
       </section>
@@ -73,7 +85,59 @@
       <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
         <h2 class="text-lg font-bold mb-3">3. Rental agreement terms</h2>
         <p class="text-sm text-slate-600 mb-4">Read the terms below. These are a starter template and should be reviewed for your actual rental operation and applicable Philippine law before use.</p>
+
+        <!-- Scrollable preview shown on screen -->
         <div id="termsPreview" class="space-y-4 text-sm leading-6 max-h-[420px] overflow-auto border border-slate-200 rounded-xl p-4 bg-slate-50"></div>
+
+        <!-- Print-only static terms: used when generating PDFs or printing when JS may not run -->
+        <div id="termsPrint" class="terms-print space-y-4 text-sm leading-6 border border-slate-200 rounded-xl p-4 bg-white">
+          <section>
+            <h3 class="font-bold text-slate-900">Vehicle Details</h3>
+            <p>The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must keep the vehicle secure and use it with reasonable care.</p>
+          </section>
+
+          <section>
+            <h3 class="font-bold text-slate-900">Rental Period</h3>
+            <p>The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require the owner's prior approval and may incur additional charges under the separately agreed rate.</p>
+          </section>
+
+          <section>
+            <h3 class="font-bold text-slate-900">Fuel Policy</h3>
+            <p>The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling or service charges, if applicable, must be disclosed and agreed by the parties.</p>
+          </section>
+
+          <section>
+            <h3 class="font-bold text-slate-900">Renter's Obligations</h3>
+            <p>The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, use seat belts, take reasonable precautions against theft, and promptly notify the owner of accidents, breakdowns, damage, or loss. The renter must not allow an unauthorized driver to operate the vehicle.</p>
+          </section>
+
+          <section>
+            <h3 class="font-bold text-slate-900">Damage / Loss</h3>
+            <p>The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, deductibles, towing, or third-party claims depends on the facts, applicable law, insurance terms, and any separately signed written terms; this template does not create an automatic finding of liability.</p>
+          </section>
+
+          <section>
+            <h3 class="font-bold text-slate-900">Security Deposit</h3>
+            <p>Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. No deposit amount is specified by this form. Deductions should be itemized and supported by reasonable records, subject to applicable law.</p>
+          </section>
+
+          <section>
+            <h3 class="font-bold text-slate-900">Prohibited Use</h3>
+            <p>The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's written consent. The renter must not remove, tamper with, or disable safety or tracking equipment.</p>
+          </section>
+
+          <section>
+            <h3 class="font-bold text-slate-900">Return Checklist</h3>
+            <p>At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges. Both parties should retain a copy of the completed condition record.</p>
+          </section>
+
+          <section>
+            <h3 class="font-bold text-slate-900">Privacy and Recordkeeping</h3>
+            <p>The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records. The owner should restrict access, secure the spreadsheet, retain information only as necessary, and comply with applicable privacy and data-protection requirements.</p>
+          </section>
+
+        </div>
+
         <label class="flex gap-3 items-start mt-5 p-4 rounded-xl border border-sky-200 bg-sky-50">
           <input id="agreementAccepted" name="agreementAccepted" type="checkbox" required class="mt-1 h-5 w-5 accent-sky-600">
           <span class="font-semibold">I have read, understood, and agree to all terms and conditions of this rental agreement. *</span>
