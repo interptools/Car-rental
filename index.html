@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0f172a">
   <title>Car Rental Agreement | MG ZS Lux 2025</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Cache control hints (note: HTTP headers are authoritative; these meta tags help browsers only in some cases) -->
+  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="expires" content="0">
+
+  <script src="https://cdn.tailwindcss.com?v=c496670c6"></script>
   <style>
     body{background:#f1f5f9} .field{width:100%;border:1px solid #cbd5e1;border-radius:.6rem;padding:.65rem .75rem;background:white}
     .field:focus{outline:2px solid #38bdf8;outline-offset:1px} label{font-size:.875rem;font-weight:600;color:#334155}
@@ -21,6 +26,9 @@
 
     /* Avoid page-break inside important sections when printing */
     #termsPrint section, #termsPreview section { page-break-inside: avoid; }
+
+    /* Small fixed control for forcing cache refresh (visible in-page) */
+    #refreshAssetsBtn{position:fixed;right:14px;bottom:14px;background:#0ea5e9;color:#012;z-index:9999;border-radius:10px;padding:8px 12px;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
   </style>
 </head>
 <body class="text-slate-800">
@@ -152,6 +160,47 @@
     </form>
     <footer class="text-xs text-slate-500 py-8 text-center">Rental details are submitted to the rental operator. Do not use this form until the owner has configured the backend endpoint.</footer>
   </main>
-  <script src="app.js"></script>
+
+  <!-- Small manual control to clear caches and reload assets. Click to force the browser to fetch the latest files. -->
+  <button id="refreshAssetsBtn" title="Clear caches and reload">Refresh assets</button>
+  <script>
+    // Bind the refresh button to clear caches/service workers and reload with a cache-busting query param.
+    document.getElementById('refreshAssetsBtn').addEventListener('click', async function(){
+      try{
+        // Unregister service workers
+        if('serviceWorker' in navigator){
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        // Clear CacheStorage entries
+        if(window.caches){
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      }catch(e){
+        console.warn('Failed to clear caches/service workers', e);
+      }
+      // Reload with a cache-busting parameter
+      const ver = 'c496670c6';
+      const url = new URL(location.href);
+      url.searchParams.set('cachebust', ver);
+      location.replace(url.toString());
+    });
+
+    // If page was loaded with cachebust param, also append it to local asset requests to ensure fresh fetches
+    (function appendVersionToAssets(){
+      const ver = 'c496670c6';
+      if(!location.search.includes('cachebust')) return;
+      // Update app.js reference dynamically to include version
+      const existing = document.querySelector('script[src^="app.js"]');
+      if(existing){
+        existing.src = 'app.js?v=' + ver;
+      } else {
+        const s = document.createElement('script'); s.src = 'app.js?v=' + ver; document.body.appendChild(s);
+      }
+    })();
+  </script>
+
+  <script src="app.js?v=c496670c6"></script>
 </body>
 </html>
