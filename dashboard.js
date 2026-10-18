@@ -7,15 +7,37 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyu
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const TERMS = [
   ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure."],
-  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions or late returns, and any fees associated, must be agreed by the owner in writing."],
-  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling or charge fees may apply if returned with less fuel."],
-  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must follow all applicable traffic laws, report any collisions promptly, and not allow unlisted drivers to operate the vehicle."],
-  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. The renter may be responsible for repair costs and replacement where applicable, subject to any security deposit and insurance terms agreed separately."],
-  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, or unpaid fees will be detailed and documented by the owner."],
-  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without prior written permission."],
+  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extension[...]"]
+  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refu[...]"]
+  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must [...]"]
+  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. The renter may be[...]"]
+  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, clea[...]"]
+  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without[...]"]
   ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain records in connection with the rental and any related claims. The owner will handle personal data in accordance with applicable privacy rules."]
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and mainta[...]"]
 ];
+
+// Helper to render the exact terms saved with a record. This prevents PDFs using the truncated hard-coded TERMS.
+function parseTermsToArray(terms) {
+  // Normalise different possible shapes into an array of [title, text] pairs.
+  // Accepts:
+  //  - Array already in the form [[title, text], ...]
+  //  - JSON string representation of such an array
+  //  - Plain string (returned as single paragraph under "Terms and Conditions")
+  if (!terms) return TERMS;
+  if (Array.isArray(terms)) return terms;
+  if (typeof terms === "string") {
+    // Try JSON parse first (some backends store JSON-encoded arrays)
+    try {
+      const parsed = JSON.parse(terms);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) { /* not JSON */ }
+    // Otherwise return single entry with the whole text
+    return [["Terms and Conditions", terms]];
+  }
+  // Unknown shape — fall back to the default TERMS constant
+  return TERMS;
+}
 
 let adminKey = "";
 let records = [];
@@ -137,8 +159,8 @@ function renderRecords() {
       <td>${escapeHtml(r.contact || "—")}</td>
       <td>${escapeHtml(period(r))}</td>
       <td>${escapeHtml(r.totalDays || "—")}</td>
-      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div></td>
-      <td><span class="rounded-full px-2 py-1 text-xs ${String(r.agreementAccepted).toLowerCase()==="yes"?"bg-green-100 text-green-800":"bg-red-100 text-red-800"}">${escapeHtml(String(r.agreementAccepted || "No"))}</span></td>
+      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div><[...]
+      <td><span class="rounded-full px-2 py-1 text-xs ${String(r.agreementAccepted).toLowerCase()==="yes"?"bg-green-100 text-green-800":"bg-red-100 text-red-800"}">${escapeHtml(String(r.agreement[...]
       <td><button class="pdfBtn rounded-lg bg-slate-900 hover:bg-slate-700 text-white px-3 py-2 whitespace-nowrap" data-index="${index}">Download Agreement PDF</button></td>
     </tr>`;
   }).join("");
@@ -226,12 +248,12 @@ function downloadAgreementPdf(r) {
 
   function addAgreementSummary() {
     addSectionTitle("5. COMPLETE AGREEMENT SUMMARY");
-    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"}, agrees to the full terms in this document and confirms that the vehicle condition, dates, and obligations were reviewed before acceptance.`);
-    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: ${r.fuelLevelOut || "—"}.`);
-    addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"}).`);
+    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"}[...]");
+    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: $[...]");
+    addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"})[...]");
     addParagraph(`Driver's licence: ${r.licenseNo || "—"}; expiry ${formatDate(r.licenseExpiry)}. Government ID: ${r.govIdType || "—"} ${r.govIdNumber || "—"}.`);
     addParagraph(`Pre-existing damage / notes: ${r.notes || "No additional notes recorded."}`);
-    addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}. Terms version: ${r.termsVersion || "1.0"}.`);
+    addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}. Terms version: ${r.te[...]");
   }
 
   // header
@@ -278,8 +300,9 @@ function downloadAgreementPdf(r) {
 
   y += 2;
   addSectionTitle("3. TERMS AND CONDITIONS");
-  // render terms more compactly to help fit into two pages
-  TERMS.forEach(([title, text]) => {
+  // render the terms saved with the record if present (ensures PDF matches what renter agreed)
+  const termsToRender = parseTermsToArray(r.terms || r.termsText || r.termsJSON || null);
+  termsToRender.forEach(([title, text]) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text(title, margin, y);
@@ -291,7 +314,7 @@ function downloadAgreementPdf(r) {
   y += 2;
   addSectionTitle("4. ACKNOWLEDGEMENT");
   addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
-  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical signature or legally executed deed unless separately signed and witnessed in writing.");
+  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical[...]");
   addParagraph(`Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
 
   // summary and signature; ensure summary is concise to keep within two pages
