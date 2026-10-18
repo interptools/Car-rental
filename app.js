@@ -5,15 +5,15 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 
 const RENTAL_TERMS = [
-  ["Vehicle Details", `The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must keep the vehicle secure and use it with reasonable care.`],
-  ["Rental Period", `The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require the owner's prior approval and may incur additional charges under the separately agreed rate.`],
-  ["Fuel Policy", `The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling or service charges, if applicable, must be disclosed and agreed by the parties.`],
-  ["Renter's Obligations", `The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, use seat belts, take reasonable precautions against theft, and promptly notify the owner of accidents, breakdowns, damage, or loss. The renter must not allow an unauthorized driver to operate the vehicle.`],
-  ["Damage / Loss", `The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, deductibles, towing, or third-party claims depends on the facts, applicable law, insurance terms, and any separately signed written terms; this template does not create an automatic finding of liability.`],
-  ["Security Deposit", `Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. No deposit amount is specified by this form. Deductions should be itemized and supported by reasonable records, subject to applicable law.`],
-  ["Prohibited Use", `The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's written consent. The renter must not remove, tamper with, or disable safety or tracking equipment.`],
-  ["Return Checklist", `At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges. Both parties should retain a copy of the completed condition record.`],
-  ["Privacy and Recordkeeping", `The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records. The owner should restrict access, secure the spreadsheet, retain information only as necessary, and comply with applicable privacy and data-protection requirements.`]
+  ["Vehicle Details", `The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The rental agreement also records the current condition, fuel level, and other agreed vehicle information before the rental begins.`],
+  ["Rental Period", `The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions are only valid if agreed in writing and may incur additional charges.`],
+  ["Fuel Policy", `The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling, top-ups, and any fuel difference are subject to the agreed policy and any documented adjustment.`],
+  ["Renter's Obligations", `The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must follow all traffic laws, vehicle rules, and the owner's reasonable instructions related to the rental.`],
+  ["Damage / Loss", `The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for damage and losses will be determined under the agreement and applicable law.`],
+  ["Security Deposit", `Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, unpaid charges, or missing items may be applied in accordance with the agreement.`],
+  ["Prohibited Use", `The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without prior approval. Any prohibited or unsafe use may void coverage and trigger additional liability.`],
+  ["Return Checklist", `At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charging or adjustment items before closing the agreement.`],
+  ["Privacy and Recordkeeping", `The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain a record of the transaction and required administration.`],
 ];
 
 function renderTerms() {
@@ -24,7 +24,7 @@ function renderTerms() {
   ).join("");
 }
 function escapeHtml(value) {
-  return String(value).replace(/[&<>\>"']/g, ch => ({
+  return String(value).replace(/[&<>\"']/g, ch => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   }[ch]));
 }
@@ -41,11 +41,14 @@ function getRentalDays() {
 }
 function collectFormData(form) {
   const data = Object.fromEntries(new FormData(form).entries());
+  const nowIso = new Date().toISOString();
   data.agreementAccepted = document.getElementById("agreementAccepted").checked ? "Yes" : "No";
   data.vehicleModel = "MG ZS Lux 2025";
   data.vehiclePlate = "GBJ 3556";
   data.vehicleColor = "Black";
   data.termsVersion = "1.0";
+  data.timestamp = nowIso;
+  data.submittedAt = nowIso;
   return data;
 }
 async function submitRental(event) {
@@ -72,13 +75,6 @@ async function submitRental(event) {
   status.textContent = "Submitting securely to the configured endpoint…";
   status.className = "text-sm text-slate-600";
   try {
-    /*
-     * Apps Script web apps often trigger browser CORS restrictions. Using
-     * text/plain avoids a preflight request. The browser may report an opaque
-     * response, so the script's doPost returns a success JSON for non-browser
-     * clients, but this static client cannot reliably inspect it cross-origin.
-     * A success message here means the request was sent, not independently verified.
-     */
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors",
