@@ -7,54 +7,49 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyu
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const TERMS = [
   ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure."],
-  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extension[...]"]
-  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refu[...]"]
-  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must [...]"]
-  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. The renter may be[...]"]
-  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, clea[...]"]
-  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without[...]"]
+  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location."],
+  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level."],
+  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving."],
+  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures."],
+  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover."],
+  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without prior approval."],
   ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and mainta[...]"]
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain records."],
 ];
-
-// Helper to render the exact terms saved with a record. This prevents PDFs using the truncated hard-coded TERMS.
-function parseTermsToArray(terms) {
-  // Normalise different possible shapes into an array of [title, text] pairs.
-  // Accepts:
-  //  - Array already in the form [[title, text], ...]
-  //  - JSON string representation of such an array
-  //  - Plain string (returned as single paragraph under "Terms and Conditions")
-  if (!terms) return TERMS;
-  if (Array.isArray(terms)) return terms;
-  if (typeof terms === "string") {
-    // Try JSON parse first (some backends store JSON-encoded arrays)
-    try {
-      const parsed = JSON.parse(terms);
-      if (Array.isArray(parsed)) return parsed;
-    } catch (e) { /* not JSON */ }
-    // Otherwise return single entry with the whole text
-    return [["Terms and Conditions", terms]];
-  }
-  // Unknown shape — fall back to the default TERMS constant
-  return TERMS;
-}
 
 let adminKey = "";
 let records = [];
 
 const $ = id => document.getElementById(id);
+
+function parseRecordTimestamp(value) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    value = Number(value.trim());
+  }
+  if (typeof value === "number") {
+    const ms = value > 1e12 ? value : value * 1000;
+    const date = new Date(ms);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  if (typeof value === "string") {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  return null;
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>\"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
 }
 function fmt(value) {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+  const date = parseRecordTimestamp(value);
+  if (!date) return "—";
+  return date.toLocaleString();
 }
 function formatDate(value) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
+  const date = parseRecordTimestamp(value);
+  if (!date) return "—";
   return date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -62,9 +57,8 @@ function formatDate(value) {
   });
 }
 function formatDateTime(value) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
+  const date = parseRecordTimestamp(value);
+  if (!date) return "—";
   const datePart = date.toLocaleDateString(undefined, {
     year: "numeric",
     month: "long",
@@ -78,9 +72,23 @@ function formatDateTime(value) {
   return `${datePart} at ${timePart}`;
 }
 function period(record) {
-  // For display in the dashboard table keep original values, but presentationally we could format here if desired
   return `${record.pickupDate || "—"} → ${record.returnDate || "—"}`;
 }
+function parseTermsToArray(terms) {
+  if (!terms) return TERMS;
+  if (Array.isArray(terms)) return terms;
+  if (typeof terms === "string") {
+    try {
+      const parsed = JSON.parse(terms);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {
+      // ignore JSON parse failure and use single entry fallback below
+    }
+    return [["Terms and Conditions", terms]];
+  }
+  return TERMS;
+}
+
 async function loadRecords() {
   const status = $("loadStatus");
   status.textContent = "Loading records…";
@@ -101,11 +109,6 @@ async function loadRecords() {
 }
 
 function requestRecordsJsonp() {
-  /*
-   * Apps Script ContentService responses can be awkward to read with cross-origin
-   * fetch from a static site. JSONP via a script element avoids CORS, and the
-   * callback name is generated locally. The admin key remains entered at runtime.
-   */
   return new Promise((resolve, reject) => {
     const callbackName = "__rentalRecordsCallback";
     const previous = window[callbackName];
@@ -142,10 +145,10 @@ function requestRecordsJsonp() {
 
 function renderRecords() {
   const query = $("searchInput").value.trim().toLowerCase();
-  const filtered = records.filter(r => [r.fullName,r.contact,r.email,r.vehiclePlate,r.licenseNo].some(v => String(v || "").toLowerCase().includes(query)));
+  const filtered = records.filter(r => [r.fullName, r.contact, r.email, r.vehiclePlate, r.licenseNo].some(v => String(v || "").toLowerCase().includes(query)));
   $("totalRecords").textContent = records.length;
   $("acceptedCount").textContent = records.filter(r => String(r.agreementAccepted).toLowerCase() === "yes").length;
-  $("latestRecord").textContent = records.length ? fmt(records[records.length - 1].timestamp) : "—";
+  $("latestRecord").textContent = records.length ? fmt(records[records.length - 1].timestamp || records[records.length - 1].submittedAt || records[records.length - 1].createdAt || records[records.length - 1].recordedAt) : "—";
   const body = $("recordsBody");
   if (!filtered.length) {
     body.innerHTML = `<tr><td colspan="8" class="text-slate-500">${records.length ? "No records match your search." : "No records found."}</td></tr>`;
@@ -153,14 +156,15 @@ function renderRecords() {
   }
   body.innerHTML = filtered.map(r => {
     const index = records.indexOf(r);
+    const ts = r.timestamp || r.submittedAt || r.createdAt || r.recordedAt;
     return `<tr>
-      <td>${escapeHtml(fmt(r.timestamp))}</td>
+      <td>${escapeHtml(fmt(ts))}</td>
       <td><strong>${escapeHtml(r.fullName || "—")}</strong><div class="text-xs text-slate-500">${escapeHtml(r.email || "")}</div></td>
       <td>${escapeHtml(r.contact || "—")}</td>
       <td>${escapeHtml(period(r))}</td>
       <td>${escapeHtml(r.totalDays || "—")}</td>
-      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div><[...]
-      <td><span class="rounded-full px-2 py-1 text-xs ${String(r.agreementAccepted).toLowerCase()==="yes"?"bg-green-100 text-green-800":"bg-red-100 text-red-800"}">${escapeHtml(String(r.agreement[...]
+      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div></td>
+      <td><span class="rounded-full px-2 py-1 text-xs ${String(r.agreementAccepted).toLowerCase()==="yes"?"bg-green-100 text-green-800":"bg-red-100 text-red-800"}">${escapeHtml(String(r.agreementAccepted || "No"))}</span></td>
       <td><button class="pdfBtn rounded-lg bg-slate-900 hover:bg-slate-700 text-white px-3 py-2 whitespace-nowrap" data-index="${index}">Download Agreement PDF</button></td>
     </tr>`;
   }).join("");
@@ -182,13 +186,12 @@ function downloadAgreementPdf(r) {
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 14; // slightly smaller margin to fit more content
+  const margin = 14;
   const maxWidth = pageWidth - margin * 2;
-  const labelWidth = 56; // smaller label column
-  let y = 18; // move content up to fit more
+  const labelWidth = 56;
+  let y = 18;
 
   function ensureSpace(required = 10) {
     if (y + required > pageHeight - 14) {
@@ -202,7 +205,6 @@ function downloadAgreementPdf(r) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.text(`${label}:`, margin, y);
-
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     const lines = doc.splitTextToSize(String(value ?? "—"), maxWidth - labelWidth - 4);
@@ -238,25 +240,22 @@ function downloadAgreementPdf(r) {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-
     doc.line(leftX, sigY, leftX + lineLength, sigY);
     doc.line(rightX, sigY, rightX + lineLength, sigY);
-
     doc.text("Renter signature / date", leftX, sigY + 6);
     doc.text("Owner / representative signature / date", rightX, sigY + 6);
   }
 
   function addAgreementSummary() {
     addSectionTitle("5. COMPLETE AGREEMENT SUMMARY");
-    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"}[...]");
-    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: $[...]");
-    addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"})[...]");
+    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"}, agreed to the specified terms and conditions for the described vehicle.`);
+    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: ${r.fuelLevelOut || "—"}.`);
+    addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"}).`);
     addParagraph(`Driver's licence: ${r.licenseNo || "—"}; expiry ${formatDate(r.licenseExpiry)}. Government ID: ${r.govIdType || "—"} ${r.govIdNumber || "—"}.`);
     addParagraph(`Pre-existing damage / notes: ${r.notes || "No additional notes recorded."}`);
-    addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}. Terms version: ${r.te[...]");
+    addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${formatDateTime(r.timestamp || r.submittedAt || r.createdAt || r.recordedAt)}. Terms version: ${r.termsVersion || "1.0"}`);
   }
 
-  // header
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, pageWidth, 34, "F");
   doc.setTextColor(255, 255, 255);
@@ -264,12 +263,9 @@ function downloadAgreementPdf(r) {
   doc.setFontSize(16);
   doc.text("VEHICLE RENTAL AGREEMENT", margin, 16);
 
-  // make vehicle line white so it's visible on the dark header
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text(`${r.vehicleModel || VEHICLE.model} | Plate ${r.vehiclePlate || VEHICLE.plate} | ${r.vehicleColor || VEHICLE.color}`, margin, 26);
-
-  // switch back to black for the rest of the document
   doc.setTextColor(0, 0, 0);
 
   y = 40;
@@ -292,7 +288,6 @@ function downloadAgreementPdf(r) {
   addField("Pick-up date/time", formatDateTime(r.pickupDate));
   addField("Return date/time", formatDateTime(r.returnDate));
   addField("Total rental days", r.totalDays);
-  // blank line for manual rent price entry
   addField("Agreed rent (PHP)", "__________________________");
   addField("Odometer out (km)", r.odometerOut);
   addField("Fuel level out", r.fuelLevelOut);
@@ -300,29 +295,28 @@ function downloadAgreementPdf(r) {
 
   y += 2;
   addSectionTitle("3. TERMS AND CONDITIONS");
-  // render the terms saved with the record if present (ensures PDF matches what renter agreed)
   const termsToRender = parseTermsToArray(r.terms || r.termsText || r.termsJSON || null);
   termsToRender.forEach(([title, text]) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text(title, margin, y);
     y += 5;
-    // use a slightly smaller paragraph font here
     addParagraph(text);
   });
 
   y += 2;
   addSectionTitle("4. ACKNOWLEDGEMENT");
   addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
-  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical[...]");
-  addParagraph(`Record timestamp: ${r.timestamp ? formatDateTime(r.timestamp) : "Not available"}  |  Terms version: ${r.termsVersion || "1.0"}`);
+  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical signature or signed paper copy.");
+  addParagraph(`Record timestamp: ${formatDateTime(r.timestamp || r.submittedAt || r.createdAt || r.recordedAt)}  |  Terms version: ${r.termsVersion || "1.0"}`);
 
-  // summary and signature; ensure summary is concise to keep within two pages
   addAgreementSummary();
   addSignatureBlock();
 
-  const safeName = String(r.fullName || "renter").replace(/[^a-z0-9_-]+/gi, "_").slice(0,50);
-  doc.save(`Rental_Agreement_${safeName}_${String(r.timestamp || "").slice(0,10) || "record"}.pdf`);
+  const safeName = String(r.fullName || "renter").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 50);
+  const tsValue = r.timestamp || r.submittedAt || r.createdAt || r.recordedAt;
+  const fileDate = parseRecordTimestamp(tsValue) ? parseRecordTimestamp(tsValue).toISOString().slice(0, 10) : "record";
+  doc.save(`Rental_Agreement_${safeName}_${fileDate}.pdf`);
 }
 
 $("loginForm").addEventListener("submit", async event => {
