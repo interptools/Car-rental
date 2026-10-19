@@ -2,10 +2,8 @@
 <!--
   ============================================================
   CAR RENTAL — OWNER DASHBOARD
-  VERSION: 2.0.0
+  VERSION: 2.2.1 (Full PDF Terms & Page-Break Fix)
   UPDATED: 2026-10-19
-  This file contains ALL dashboard code (HTML + CSS + JS).
-  No external dashboard.js needed. To update: replace whole file.
   ============================================================
 -->
 <html lang="en">
@@ -13,7 +11,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="app-version" content="2.0.0">
+  <meta name="app-version" content="2.2.1">
   <title>Owner Dashboard | Rental Records</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -114,22 +112,24 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ============================================================================
-   OWNER DASHBOARD — inline app code (v2.0.0)
+   OWNER DASHBOARD — inline app code (v2.2.1)
    ============================================================================ */
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "2.2.1";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const PH_TIMEZONE = "Asia/Manila";
+
+// FIXED: Restored the complete text for all terms so the PDF is not truncated
 const TERMS = [
-  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure."],
-  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time."],
-  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement."],
-  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period."],
-  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim."],
-  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed."],
-  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use."],
-  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental."]
+  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement."],
+  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require prior written approval from the owner and may incur additional charges."],
+  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling is the renter's responsibility unless stated otherwise."],
+  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, maintain safe driving standards, and ensure all occupants are properly seated and secured."],
+  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, or third-party claims will be determined in line with the agreement and applicable law."],
+  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, or unpaid charges will be applied only as agreed."],
+  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's explicit written approval."],
+  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges or deductions."],
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records required for the rental relationship."]
 ];
 
 let adminKey = "";
@@ -356,6 +356,7 @@ function downloadAgreementPdf(r) {
   const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
   const margin = 14, maxWidth = pw - margin * 2, labelWidth = 56;
   let y = 18;
+  
   function ensureSpace(req = 10) { if (y + req > ph - 14) { doc.addPage(); y = 18; } }
   function addField(label, value) {
     ensureSpace(8);
@@ -390,6 +391,7 @@ function downloadAgreementPdf(r) {
   doc.setFont("helvetica", "normal"); doc.setFontSize(9);
   doc.text(`${r.vehicleModel || VEHICLE.model} | Plate ${r.vehiclePlate || VEHICLE.plate} | ${r.vehicleColor || VEHICLE.color}`, margin, 26);
   doc.setTextColor(0, 0, 0);
+  
   y = 40;
   addSectionTitle("1. RENTER INFORMATION");
   addField("Full legal name", r.fullName); addField("Contact number", r.contact);
@@ -398,16 +400,22 @@ function downloadAgreementPdf(r) {
   addField("Licence expiry", formatDate(r.licenseExpiry));
   addField("Government ID type", r.govIdType); addField("Government ID number", r.govIdNumber);
   addField("Emergency contact", `${r.emergencyName || "—"} (${r.emergencyPhone || "—"})`);
+  
   y += 2; addSectionTitle("2. RENTAL AND VEHICLE CONDITION");
   addField("Vehicle", `${r.vehicleModel || VEHICLE.model}; ${r.vehicleColor || VEHICLE.color}; Plate ${r.vehiclePlate || VEHICLE.plate}`);
   addField("Pick-up date/time", formatDateTime(r.pickupDate));
   addField("Return date/time", formatDateTime(r.returnDate));
   addField("Total rental days", r.totalDays); addField("Odometer out (km)", r.odometerOut);
   addField("Fuel level out", r.fuelLevelOut); addField("Pre-existing damage / notes", r.notes);
+  
   y += 2; addSectionTitle("3. TERMS AND CONDITIONS");
+  
+  // FIXED: Added ensureSpace(15) so the term heading doesn't get orphaned at the bottom of a page
   parseTermsToArray(r.terms || null).forEach(([title, text]) => {
+    ensureSpace(15); 
     doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.text(title, margin, y); y += 5; addParagraph(text);
   });
+  
   y += 2; addSectionTitle("4. ACKNOWLEDGEMENT");
   addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
   addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical copy or proof of vehicle handover.");
