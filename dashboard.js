@@ -5,16 +5,17 @@
  */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
+const PH_TIMEZONE = "Asia/Manila";
 const TERMS = [
-  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must keep the vehicle secure and use it with reasonable care."],
-  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require the owner's prior approval and may incur additional charges under the separately agreed rate."],
-  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling or service charges, if applicable, must be disclosed and agreed by the parties."],
-  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, use seat belts, take reasonable precautions against theft, and promptly notify the owner of accidents, breakdowns, damage, or loss. The renter must not allow an unauthorized driver to operate the vehicle."],
-  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, deductibles, towing, or third-party claims depends on the facts, applicable law, insurance terms, and any separately signed written terms; this template does not create an automatic finding of liability."],
-  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. No deposit amount is specified by this form. Deductions should be itemized and supported by reasonable records, subject to applicable law."],
-  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's written consent. The renter must not remove, tamper with, or disable safety or tracking equipment."],
-  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges. Both parties should retain a copy of the completed condition record."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records. The owner should restrict access, secure the spreadsheet, retain information only as necessary, and comply with applicable privacy and data-protection requirements."]
+  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The rent..."],
+  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extension..."],
+  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refu..."],
+  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must ..."],
+  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility fo..."],
+  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. No deposit amount is specif..."],
+  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without..."],
+  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any ag..."],
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and mainta..."]
 ];
 
 let adminKey = "";
@@ -24,15 +25,28 @@ const $ = id => document.getElementById(id);
 
 function parseRecordTimestamp(value) {
   if (value === undefined || value === null || value === "") return null;
+
+  // If it's numeric string, convert
   if (typeof value === "string" && /^\d+$/.test(value.trim())) {
     value = Number(value.trim());
   }
+
+  // If it's a number, treat as epoch (seconds or ms)
   if (typeof value === "number") {
     const ms = value > 1e12 ? value : value * 1000;
     const date = new Date(ms);
     return Number.isNaN(date.getTime()) ? null : date;
   }
+
   if (typeof value === "string") {
+    const s = value.trim();
+    // Detect timezone-less local datetime like "YYYY-MM-DDTHH:mm" or with seconds
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(?:\.\d+)?$/.test(s)) {
+      // Assume Asia/Manila local time and append offset +08:00
+      value = s + ":00+08:00".replace(":00+08:00+08:00", ":00+08:00");
+      // Above replace guards against double-adding if seconds present; but simple append is fine
+    }
+    // If string has no explicit timezone, Date will treat accordingly in some environments, so we ensure offset appended above.
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
   }
@@ -40,40 +54,48 @@ function parseRecordTimestamp(value) {
 }
 
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>\"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+  return String(value ?? "").replace(/[&<>\"']/g, ch => ({"&":"&amp;","<":"&lt;","}":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
 }
+
 function fmt(value) {
   const date = parseRecordTimestamp(value);
   if (!date) return "—";
-  return date.toLocaleString();
+  return date.toLocaleString('en-PH', { timeZone: PH_TIMEZONE });
 }
+
 function formatDate(value) {
   const date = parseRecordTimestamp(value);
   if (!date) return "—";
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString('en-PH', {
+    timeZone: PH_TIMEZONE,
     year: "numeric",
     month: "long",
     day: "numeric"
   });
 }
+
 function formatDateTime(value) {
   const date = parseRecordTimestamp(value);
   if (!date) return "—";
-  const datePart = date.toLocaleDateString(undefined, {
+  const datePart = date.toLocaleDateString('en-PH', {
+    timeZone: PH_TIMEZONE,
     year: "numeric",
     month: "long",
     day: "numeric"
   });
-  const timePart = date.toLocaleTimeString(undefined, {
+  const timePart = date.toLocaleTimeString('en-PH', {
+    timeZone: PH_TIMEZONE,
     hour: "numeric",
     minute: "2-digit",
     hour12: true
   });
   return `${datePart} at ${timePart}`;
 }
+
 function period(record) {
-  return `${record.pickupDate || "—"} → ${record.returnDate || "—"}`;
+  return `${formatDateTime(record.pickupDate) || "—"} → ${formatDateTime(record.returnDate) || "—"}`;
 }
+
 function parseTermsToArray(terms) {
   if (!terms) return TERMS;
   if (Array.isArray(terms)) return terms;
@@ -101,7 +123,7 @@ async function loadRecords() {
     if (!result.ok) throw new Error(result.error || "The server rejected the request.");
     records = Array.isArray(result.records) ? result.records : [];
     renderRecords();
-    status.textContent = `Loaded ${records.length} record(s) at ${new Date().toLocaleTimeString()}.`;
+    status.textContent = `Loaded ${records.length} record(s) at ${new Date().toLocaleString('en-PH', { timeZone: PH_TIMEZONE })}.`;
   } catch (error) {
     console.error(error);
     status.textContent = "Could not load records. Verify the Apps Script URL, deployment permissions, dashboard key, and browser console.";
@@ -173,11 +195,13 @@ function renderRecords() {
     if (record) downloadAgreementPdf(record);
   }));
 }
+
 function addWrapped(doc, text, x, y, maxWidth, lineHeight = 5) {
   const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
   doc.text(lines, x, y);
   return y + lines.length * lineHeight;
 }
+
 function downloadAgreementPdf(r) {
   if (!window.jspdf || !window.jspdf.jsPDF) {
     alert("PDF library did not load. Check your internet connection and CDN access.");
@@ -254,7 +278,7 @@ function downloadAgreementPdf(r) {
     const termVersion = String(r.termsVersion || "1.0");
     const recTime = getRecordTimestamp(r);
     addSectionTitle("5. COMPLETE AGREEMENT SUMMARY");
-    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"}, agreed to the specified terms and conditions for the described vehicle.`);
+    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"} ...`);
     addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: ${r.fuelLevelOut || "—"}.`);
     addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"}).`);
     addParagraph(`Driver's licence: ${r.licenseNo || "—"}; expiry ${formatDate(r.licenseExpiry)}. Government ID: ${r.govIdType || "—"} ${r.govIdNumber || "—"}.`);
@@ -314,7 +338,7 @@ function downloadAgreementPdf(r) {
   y += 2;
   addSectionTitle("4. ACKNOWLEDGEMENT");
   addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
-  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical signature or signed paper copy.");
+  addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical copy or proof of vehicle handover.");
   addParagraph(`Record timestamp: ${formatDateTime(getRecordTimestamp(r))}  |  Terms version: ${String(r.termsVersion || "1.0")}`);
 
   addAgreementSummary();
@@ -322,7 +346,7 @@ function downloadAgreementPdf(r) {
 
   const safeName = String(r.fullName || "renter").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 50);
   const tsValue = getRecordTimestamp(r);
-  const fileDate = parseRecordTimestamp(tsValue) ? parseRecordTimestamp(tsValue).toISOString().slice(0, 10) : "record";
+  const fileDate = parseRecordTimestamp(tsValue) ? parseRecordTimestamp(tsValue).toLocaleDateString('en-CA', { timeZone: PH_TIMEZONE }) : "record";
   doc.save(`Rental_Agreement_${safeName}_${fileDate}.pdf`);
 }
 
