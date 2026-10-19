@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — CUSTOMER FORM
-  VERSION: 2.3.0 (Expanded & Audited)
+  VERSION: 2.3.1 (Audited Complete Build)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,7 +11,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <meta name="app-version" content="2.3.0">
+  <meta name="app-version" content="2.3.1">
   <title>Car Rental Agreement | MG ZS Lux 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -262,9 +262,9 @@
 
 <script>
 /* ============================================================================
-   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.3.0)
+   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.3.1)
    ============================================================================ */
-const APP_VERSION = "2.3.0";
+const APP_VERSION = "2.3.1";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const PH_TIMEZONE = "Asia/Manila";
 
@@ -402,15 +402,27 @@ function requestAvailabilityJsonp() {
 async function loadAvailability() {
   const status = document.getElementById("calStatus");
   if (status) status.textContent = "Loading availability…";
+  
   try {
     const result = await requestAvailabilityJsonp();
-    availabilityRanges = (result && Array.isArray(result.ranges)) ? result.ranges : [];
+    
+    // Filter out any bookings where the end date is in the past
+    const allRanges = (result && Array.isArray(result.ranges)) ? result.ranges : [];
+    const now = new Date().getTime();
+    
+    availabilityRanges = allRanges.filter(range => {
+      if (!range.end) return false;
+      const endTimestamp = new Date(range.end).getTime();
+      return !isNaN(endTimestamp) && endTimestamp > now;
+    });
+
     availabilityLoaded = true;
     availabilityError = false;
   } catch (err) {
     console.warn("Availability load failed:", err);
     availabilityError = true;
   }
+  
   renderCalendar();
   renderUnavailableList();
   checkDatesAgainstAvailability();
@@ -667,16 +679,11 @@ async function submitRental(event) {
       body: JSON.stringify(payload)
     });
     
-    // Hide inline status
     status.textContent = "";
-    
-    // Reset form behind the modal
     form.reset(); 
     document.getElementById("totalDays").value = "";
     renderCalendar(); 
     checkDatesAgainstAvailability();
-
-    // Show success modal
     document.getElementById("successModal").classList.remove("hidden");
 
   } catch (error) {
@@ -720,7 +727,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("dob").max = formatPhilippineDate(new Date());
   document.getElementById("licenseExpiry").min = formatPhilippineDate(new Date());
 
-  // Close Success Modal
   document.getElementById("closeSuccessModal").addEventListener("click", () => {
     document.getElementById("successModal").classList.add("hidden");
   });
