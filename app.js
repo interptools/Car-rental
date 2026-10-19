@@ -3,18 +3,48 @@
  * Replace APPS_SCRIPT_URL with your deployed Google Apps Script Web App URL.
  */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
+const PH_TIMEZONE = "Asia/Manila";
 
 const RENTAL_TERMS = [
-  ["Vehicle Details", `The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The rental agreement also records the current condition, fuel level, and other agreed vehicle information before the rental begins.`],
-  ["Rental Period", `The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions are only valid if agreed in writing and may incur additional charges.`],
-  ["Fuel Policy", `The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling, top-ups, and any fuel difference are subject to the agreed policy and any documented adjustment.`],
-  ["Renter's Obligations", `The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must follow all traffic laws, vehicle rules, and the owner's reasonable instructions related to the rental.`],
-  ["Damage / Loss", `The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for damage and losses will be determined under the agreement and applicable law.`],
-  ["Security Deposit", `Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, unpaid charges, or missing items may be applied in accordance with the agreement.`],
-  ["Prohibited Use", `The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without prior approval. Any prohibited or unsafe use may void coverage and trigger additional liability.`],
-  ["Return Checklist", `At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charging or adjustment items before closing the agreement.`],
-  ["Privacy and Recordkeeping", `The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain a record of the transaction and required administration.`],
+  ["Vehicle Details", `The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement.`],
+  ["Rental Period", `The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require prior written approval from the owner and may incur additional charges.`],
+  ["Fuel Policy", `The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling is the renter's responsibility unless stated otherwise.`],
+  ["Renter's Obligations", `The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, maintain safe driving standards, and ensure all occupants are properly seated and secured.`],
+  ["Damage / Loss", `The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, or third-party claims will be determined in line with the agreement and applicable law.`],
+  ["Security Deposit", `Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, or unpaid charges will be applied only as agreed.`],
+  ["Prohibited Use", `The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's explicit written approval.`],
+  ["Return Checklist", `At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges or deductions.`],
+  ["Privacy and Recordkeeping", `The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records required for the rental relationship.`],
 ];
+
+function formatPhilippineDate(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: PH_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date).replace(/\//g, "-");
+}
+
+function formatPhilippineDateTime(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: PH_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(date);
+
+  const values = {};
+  for (const part of parts) {
+    if (part.type !== "literal") values[part.type] = part.value;
+  }
+
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
+}
 
 function renderTerms() {
   const target = document.getElementById("termsPreview");
@@ -41,14 +71,14 @@ function getRentalDays() {
 }
 function collectFormData(form) {
   const data = Object.fromEntries(new FormData(form).entries());
-  const nowIso = new Date().toISOString();
+  const nowPhil = formatPhilippineDateTime();
   data.agreementAccepted = document.getElementById("agreementAccepted").checked ? "Yes" : "No";
   data.vehicleModel = "MG ZS Lux 2025";
   data.vehiclePlate = "GBJ 3556";
   data.vehicleColor = "Black";
   data.termsVersion = "1.0";
-  data.timestamp = nowIso;
-  data.submittedAt = nowIso;
+  data.timestamp = nowPhil;
+  data.submittedAt = nowPhil;
   return data;
 }
 async function submitRental(event) {
@@ -110,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
   const dob = document.getElementById("dob");
-  dob.max = new Date().toISOString().slice(0, 10);
+  dob.max = formatPhilippineDate(new Date());
   const expiry = document.getElementById("licenseExpiry");
-  expiry.min = new Date().toISOString().slice(0, 10);
+  expiry.min = formatPhilippineDate(new Date());
 });
