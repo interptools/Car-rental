@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — OWNER DASHBOARD
-  VERSION: 2.2.1 (Full PDF Terms & Page-Break Fix)
+  VERSION: 2.3.0 (Deep Audit & Full Restore)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,7 +11,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="app-version" content="2.2.1">
+  <meta name="app-version" content="2.3.0">
   <title>Owner Dashboard | Rental Records</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -82,6 +82,33 @@
       <p class="text-xs text-slate-500 mt-4">Customer identity and licence information are sensitive. Keep this dashboard key private and restrict spreadsheet access.</p>
     </section>
 
+    <!-- Hidden HTML agreement template (Restored from original) -->
+    <div id="agreementTemplate" style="display:none;" aria-hidden="true">
+      <article class="agreement bg-white p-6 rounded-lg shadow-sm max-w-3xl mx-auto">
+        <header>
+          <h1 style="font-size:18px;margin:0 0 6px">VEHICLE RENTAL AGREEMENT</h1>
+          <div style="font-size:12px;color:#334155;margin-bottom:12px">MG ZS Lux 2025 | Plate GBJ 3556 | Black</div>
+        </header>
+        <section class="agreement-meta field-grid" style="margin-bottom:12px">
+          <div class="label">Full legal name</div><div class="value">[Full name]</div>
+          <div class="label">Contact number</div><div class="value">[Phone]</div>
+          <div class="label">Address</div><div class="value">[Address]</div>
+          <div class="label">Email</div><div class="value">[Email]</div>
+          <div class="label">Date of birth</div><div class="value">October 26, 2000</div>
+          <div class="label">Driver's licence number</div><div class="value">[Licence]</div>
+          <div class="label">Licence expiry</div><div class="value">October 26, 2026</div>
+        </section>
+        <section class="terms" style="margin-bottom:12px">
+          <h2 style="margin:0 0 8px;font-size:14px">Terms and Conditions</h2>
+          <p style="margin:0 0 8px;line-height:1.4">The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter agrees to return the vehicle in the same condition except for reasonable wear and tear. The rental period begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time. Extensions must be agreed in writing. Fuel policy and security deposit terms are the renter's responsibility as separately agreed.</p>
+        </section>
+        <section class="signature-block">
+          <div class="signature"><div class="sig-line"></div><div class="sig-label">Renter signature / date</div></div>
+          <div class="signature"><div class="sig-line"></div><div class="sig-label">Owner / representative signature / date</div></div>
+        </section>
+      </article>
+    </div>
+
     <!-- Confirmation email modal -->
     <div id="emailModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-xl">
@@ -112,14 +139,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ============================================================================
-   OWNER DASHBOARD — inline app code (v2.2.1)
+   OWNER DASHBOARD — inline app code (v2.3.0)
    ============================================================================ */
-const APP_VERSION = "2.2.1";
+const APP_VERSION = "2.3.0";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const PH_TIMEZONE = "Asia/Manila";
 
-// FIXED: Restored the complete text for all terms so the PDF is not truncated
 const TERMS = [
   ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement."],
   ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require prior written approval from the owner and may incur additional charges."],
@@ -136,13 +162,26 @@ let adminKey = "";
 let records = [];
 const $ = id => document.getElementById(id);
 
+// Restored original robust timezone parsing
 function parseRecordTimestamp(value) {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value === "string" && /^\d+$/.test(value.trim())) value = Number(value.trim());
-  if (typeof value === "number") { const ms = value > 1e12 ? value : value * 1000; const d = new Date(ms); return isNaN(d.getTime()) ? null : d; }
-  if (typeof value === "string") { const d = new Date(value); return isNaN(d.getTime()) ? null : d; }
+  if (typeof value === "number") { 
+    const ms = value > 1e12 ? value : value * 1000; 
+    const date = new Date(ms); 
+    return isNaN(date.getTime()) ? null : date; 
+  }
+  if (typeof value === "string") {
+    let s = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(?:\.\d+)?$/.test(s)) {
+      s = s + ":00+08:00".replace(":00+08:00+08:00", ":00+08:00");
+    }
+    const date = new Date(s);
+    return isNaN(date.getTime()) ? null : date;
+  }
   return null;
 }
+
 function escapeHtml(v) { return String(v ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch])); }
 function fmt(v) { const d = parseRecordTimestamp(v); return d ? d.toLocaleString("en-PH", { timeZone: PH_TIMEZONE }) : "—"; }
 function formatDate(v) { const d = parseRecordTimestamp(v); return d ? d.toLocaleDateString("en-PH", { timeZone: PH_TIMEZONE, year: "numeric", month: "long", day: "numeric" }) : "—"; }
@@ -349,6 +388,12 @@ function openInEmailApp() {
 }
 
 /* PDF */
+function addWrapped(doc, text, x, y, maxWidth, lineHeight = 5) {
+  const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
+  doc.text(lines, x, y);
+  return y + lines.length * lineHeight;
+}
+
 function downloadAgreementPdf(r) {
   if (!window.jspdf || !window.jspdf.jsPDF) { alert("PDF library did not load. Check your connection."); return; }
   const { jsPDF } = window.jspdf;
@@ -385,6 +430,20 @@ function downloadAgreementPdf(r) {
   }
   function getTs(rec) { return rec.timestamp || rec.submittedAt; }
 
+  // Restored original Section 5: Complete Agreement Summary
+  function addAgreementSummary() {
+    const termVersion = String(r.termsVersion || "1.0");
+    const recTime = getTs(r);
+    addSectionTitle("5. COMPLETE AGREEMENT SUMMARY");
+    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"} ...`);
+    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: ${r.fuelLevelOut || "—"}.`);
+    addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"}).`);
+    addParagraph(`Driver's licence: ${r.licenseNo || "—"}; expiry ${formatDate(r.licenseExpiry)}. Government ID: ${r.govIdType || "—"} ${r.govIdNumber || "—"}.`);
+    addParagraph(`Pre-existing damage / notes: ${r.notes || "No additional notes recorded."}`);
+    addParagraph(`Agreed rent (PHP): ${r.agreedRent || "__________________________"}`);
+    addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${formatDateTime(recTime)}. Terms version: ${termVersion}. Status: ${statusOf(r)}.`);
+  }
+
   doc.setFillColor(15, 23, 42); doc.rect(0, 0, pw, 34, "F");
   doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
   doc.text("VEHICLE RENTAL AGREEMENT", margin, 16);
@@ -405,12 +464,12 @@ function downloadAgreementPdf(r) {
   addField("Vehicle", `${r.vehicleModel || VEHICLE.model}; ${r.vehicleColor || VEHICLE.color}; Plate ${r.vehiclePlate || VEHICLE.plate}`);
   addField("Pick-up date/time", formatDateTime(r.pickupDate));
   addField("Return date/time", formatDateTime(r.returnDate));
-  addField("Total rental days", r.totalDays); addField("Odometer out (km)", r.odometerOut);
+  addField("Total rental days", r.totalDays); 
+  addField("Agreed rent (PHP)", r.agreedRent || "__________________________"); // Restored
+  addField("Odometer out (km)", r.odometerOut);
   addField("Fuel level out", r.fuelLevelOut); addField("Pre-existing damage / notes", r.notes);
   
   y += 2; addSectionTitle("3. TERMS AND CONDITIONS");
-  
-  // FIXED: Added ensureSpace(15) so the term heading doesn't get orphaned at the bottom of a page
   parseTermsToArray(r.terms || null).forEach(([title, text]) => {
     ensureSpace(15); 
     doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.text(title, margin, y); y += 5; addParagraph(text);
@@ -419,7 +478,9 @@ function downloadAgreementPdf(r) {
   y += 2; addSectionTitle("4. ACKNOWLEDGEMENT");
   addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
   addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical copy or proof of vehicle handover.");
-  addParagraph(`Record timestamp: ${formatDateTime(getTs(r))}  |  Terms version: ${String(r.termsVersion || "1.0")}  |  Status: ${statusOf(r)}`);
+  addParagraph(`Record timestamp: ${formatDateTime(getTs(r))}  |  Terms version: ${String(r.termsVersion || "1.0")}`);
+  
+  addAgreementSummary(); // Restored
   addSignatureBlock();
 
   const safeName = String(r.fullName || "renter").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 50);
