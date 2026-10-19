@@ -1,0 +1,425 @@
+<!doctype html>
+<!--
+  ============================================================
+  CAR RENTAL — CUSTOMER FORM
+  VERSION: 2.0.0
+  UPDATED: 2026-10-19
+  This file contains ALL customer-side code (HTML + CSS + JS).
+  No external app.js needed. To update: replace this whole file.
+  ============================================================
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="app-version" content="2.0.0">
+  <title>Car Rental Agreement | MG ZS Lux 2025</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{background:#f1f5f9}
+    .field{width:100%;border:1px solid #cbd5e1;border-radius:.6rem;padding:.65rem .75rem;background:white}
+    .field:focus{outline:2px solid #38bdf8;outline-offset:1px}
+    label{font-size:.875rem;font-weight:600;color:#334155}
+    @media print {
+      #termsPreview { max-height: none !important; overflow: visible !important; }
+      #termsPreview section { page-break-inside: avoid; }
+    }
+    #refreshAssetsBtn{position:fixed;right:14px;bottom:14px;background:#0ea5e9;color:#012;z-index:9999;border-radius:10px;padding:8px 12px;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(2,6,23,0.08);font-size:12px}
+    .ver{font-family:ui-monospace,monospace;font-size:10px;color:#64748b}
+  </style>
+</head>
+<body class="text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="max-w-5xl mx-auto px-4 py-6">
+      <p class="text-sky-300 uppercase tracking-widest text-xs font-bold">Vehicle rental</p>
+      <h1 class="text-2xl md:text-3xl font-bold mt-1">Rental Agreement & Customer Details</h1>
+      <p class="text-slate-300 mt-2">Please complete all required fields and review the rental terms before submitting.</p>
+    </div>
+  </header>
+  <main class="max-w-5xl mx-auto p-4 md:py-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+      <div class="grid md:grid-cols-[180px_1fr]">
+        <div class="flex items-center justify-center p-2 bg-white">
+          <img src="images/mg-zs-black.jpg" alt="MG ZS Lux 2025" class="w-full h-auto object-contain rounded-lg shadow-sm">
+        </div>
+        <div class="p-6">
+          <p class="text-xs uppercase tracking-widest text-slate-500 font-bold">Rental vehicle</p>
+          <h2 class="text-xl font-bold mt-1">MG ZS Lux 2025</h2>
+          <div class="flex flex-wrap gap-2 mt-3 text-sm">
+            <span class="rounded-full bg-slate-100 px-3 py-1">Plate: <strong>GBJ ****</strong></span>
+            <span class="rounded-full bg-slate-100 px-3 py-1">Color: <strong>Black</strong></span>
+          </div>
+          <p class="text-sm text-slate-600 mt-3">Review the vehicle details and rental dates carefully. Submission records your acknowledgement; it does not by itself confirm availability or payment.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Availability calendar -->
+    <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-lg font-bold">Vehicle availability</h2>
+          <p class="text-sm text-slate-600">Confirmed reservations block those dates. Pick different dates if yours are blocked.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="calRefresh" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-2 text-sm">Refresh</button>
+          <button type="button" id="calPrev" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-2 text-sm" aria-label="Previous month">‹</button>
+          <button type="button" id="calNext" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-2 text-sm" aria-label="Next month">›</button>
+        </div>
+      </div>
+      <p id="calMonthLabel" class="text-center font-semibold text-slate-800 mb-2"></p>
+      <div class="grid grid-cols-7 gap-1 text-center text-xs text-slate-500 mb-1">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
+      <div class="flex flex-wrap gap-4 mt-4 text-xs text-slate-600">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-slate-100 border border-slate-300"></span>Open</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-red-100 border border-red-300"></span>Confirmed reservation</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-sky-600"></span>Your selection</span>
+      </div>
+      <p id="datesWarning" class="hidden text-sm text-red-700 mt-3" role="alert"></p>
+      <p id="calStatus" class="text-xs text-slate-500 mt-3" role="status" aria-live="polite"></p>
+    </section>
+
+    <form id="rentalForm" class="space-y-6">
+      <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
+        <h2 class="text-lg font-bold mb-4">1. Renter information</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label for="fullName">Full legal name *</label><input class="field mt-1" id="fullName" name="fullName" autocomplete="name" required maxlength="150"></div>
+          <div><label for="contact">Contact number *</label><input class="field mt-1" id="contact" name="contact" type="tel" autocomplete="tel" required maxlength="40"></div>
+          <div class="md:col-span-2"><label for="address">Residential address *</label><textarea class="field mt-1" id="address" name="address" autocomplete="street-address" rows="2" required maxlength="1000"></textarea></div>
+          <div><label for="email">Email address *</label><input class="field mt-1" id="email" name="email" type="email" autocomplete="email" required maxlength="254"></div>
+          <div><label for="dob">Date of birth *</label><input class="field mt-1" id="dob" name="dob" type="date" required></div>
+          <div><label for="licenseNo">Driver's license number *</label><input class="field mt-1" id="licenseNo" name="licenseNo" required maxlength="80"></div>
+          <div><label for="licenseExpiry">Driver's license expiry *</label><input class="field mt-1" id="licenseExpiry" name="licenseExpiry" type="date" required></div>
+          <div><label for="govIdType">Government ID type *</label>
+            <select class="field mt-1" id="govIdType" name="govIdType" required>
+              <option value="">Select ID type</option><option>Philippine Passport</option><option>UMID</option><option>PhilHealth ID</option><option>SSS ID</option><option>GSIS ID</option><option>Other</option>
+            </select>
+          </div>
+          <div><label for="govIdNumber">Government ID number *</label><input class="field mt-1" id="govIdNumber" name="govIdNumber" required maxlength="100"></div>
+          <div><label for="emergencyName">Emergency contact name *</label><input class="field mt-1" id="emergencyName" name="emergencyName" required maxlength="150"></div>
+          <div><label for="emergencyPhone">Emergency contact number *</label><input class="field mt-1" id="emergencyPhone" name="emergencyPhone" type="tel" required maxlength="40"></div>
+        </div>
+      </section>
+
+      <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
+        <h2 class="text-lg font-bold mb-4">2. Rental and vehicle condition</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label for="pickupDate">Pick-up date and time *</label><input class="field mt-1" id="pickupDate" name="pickupDate" type="datetime-local" required></div>
+          <div><label for="returnDate">Return date and time *</label><input class="field mt-1" id="returnDate" name="returnDate" type="datetime-local" required></div>
+          <div><label for="totalDays">Total rental days (calculated) *</label><input class="field mt-1 bg-slate-50" id="totalDays" name="totalDays" type="number" min="1" step="0.5" readonly required></div>
+          <div><label for="odometerOut">Odometer out (km) *</label><input class="field mt-1" id="odometerOut" name="odometerOut" type="number" min="0" step="1" required></div>
+          <div><label for="fuelLevelOut">Fuel level out *</label><select class="field mt-1" id="fuelLevelOut" name="fuelLevelOut" required><option value="">Select fuel level</option><option>Full</option><option>3/4</option><option>1/2</option><option>1/4</option><option>Empty</option></select></div>
+          <div><label for="notes">Pre-existing damage / notes</label><textarea class="field mt-1" id="notes" name="notes" rows="2" maxlength="1000" placeholder="Describe existing scratches, dents, or equipment issues."></textarea></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Rental days are calculated as elapsed time rounded up to a whole day. Confirm the agreed billing rule with the owner if a different rule applies.</p>
+      </section>
+
+      <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
+        <h2 class="text-lg font-bold mb-3">3. Rental agreement terms</h2>
+        <p class="text-sm text-slate-600 mb-4">Read the terms below. These are a starter template and should be reviewed for your actual rental operation and applicable Philippine law before use.</p>
+        <div id="termsPreview" class="space-y-4 text-sm leading-6 border border-slate-200 rounded-xl p-4 bg-slate-50"></div>
+        <label class="flex gap-3 items-start mt-5 p-4 rounded-xl border border-sky-200 bg-sky-50">
+          <input id="agreementAccepted" name="agreementAccepted" type="checkbox" required class="mt-1 h-5 w-5 accent-sky-600">
+          <span class="font-semibold">I have read, understood, and agree to all terms and conditions of this rental agreement. *</span>
+        </label>
+        <p class="text-xs text-slate-500 mt-2">Only submit information you are authorized to provide. Your details and ID information will be stored in the owner's Google Sheet.</p>
+      </section>
+
+      <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <button id="submitBtn" type="submit" class="rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white font-bold px-6 py-3">Submit rental details</button>
+        <p id="formStatus" role="status" aria-live="polite" class="text-sm text-slate-600"></p>
+      </div>
+    </form>
+    <footer class="text-xs text-slate-500 py-8 text-center">
+      Rental details are submitted to the rental operator. Do not use this form until the owner has configured the backend endpoint.
+      <br><span class="ver">Customer form v<span id="appVersion">—</span></span>
+    </footer>
+  </main>
+
+  <button id="refreshAssetsBtn" title="Clear caches and reload">Refresh assets</button>
+
+<script>
+/* ============================================================================
+   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.0.0)
+   ============================================================================ */
+const APP_VERSION = "2.0.0";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
+const PH_TIMEZONE = "Asia/Manila";
+
+const RENTAL_TERMS = [
+  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement."],
+  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require prior written approval from the owner and may incur additional charges."],
+  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling is the renter's responsibility unless stated otherwise."],
+  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, maintain safe driving standards, and ensure all occupants are properly seated and secured."],
+  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, or third-party claims will be determined in line with the agreement and applicable law."],
+  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, or unpaid charges will be applied only as agreed."],
+  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's explicit written approval."],
+  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges or deductions."],
+  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records required for the rental relationship."]
+];
+
+function formatPhilippineDate(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(date).replace(/\//g, "-");
+}
+function formatPhilippineDateTime(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("sv-SE", { timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).formatToParts(date);
+  const v = {}; for (const p of parts) if (p.type !== "literal") v[p.type] = p.value;
+  return `${v.year}-${v.month}-${v.day}T${v.hour}:${v.minute}:${v.second}`;
+}
+function addManilaOffsetToLocal(local) {
+  if (!local) return "";
+  const s = String(local).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return s + ":00+08:00";
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s + "+08:00";
+  return s;
+}
+function manilaDateKey(date) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+}
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
+}
+
+/* Availability */
+let availabilityRanges = [];
+let availabilityLoaded = false;
+let availabilityError = false;
+let calYear, calMonth;
+
+function requestAvailabilityJsonp() {
+  return new Promise((resolve, reject) => {
+    const cb = "__availabilityCallback";
+    const prev = window[cb];
+    const script = document.createElement("script");
+    const url = new URL(APPS_SCRIPT_URL);
+    let done = false;
+    const cleanup = () => {
+      if (script.parentNode) script.parentNode.removeChild(script);
+      if (prev === undefined) delete window[cb]; else window[cb] = prev;
+    };
+    const timeout = setTimeout(() => { if (done) return; done = true; cleanup(); reject(new Error("timeout")); }, 15000);
+    window[cb] = r => { if (done) return; done = true; clearTimeout(timeout); cleanup(); resolve(r); };
+    script.onerror = () => { if (done) return; done = true; clearTimeout(timeout); cleanup(); reject(new Error("network")); };
+    url.searchParams.set("action", "availability");
+    url.searchParams.set("callback", cb);
+    url.searchParams.set("_", String(Date.now()));
+    script.src = url.toString();
+    document.head.appendChild(script);
+  });
+}
+
+async function loadAvailability() {
+  const status = document.getElementById("calStatus");
+  if (status) status.textContent = "Loading availability…";
+  try {
+    const result = await requestAvailabilityJsonp();
+    availabilityRanges = (result && Array.isArray(result.ranges)) ? result.ranges : [];
+    availabilityLoaded = true; availabilityError = false;
+  } catch (err) {
+    console.warn("Availability load failed:", err);
+    availabilityError = true;
+  }
+  renderCalendar();
+  checkDatesAgainstAvailability();
+}
+
+function getBlockedDateSet() {
+  const set = new Set();
+  availabilityRanges.forEach(({ start, end }) => {
+    if (!start || !end) return;
+    const s = new Date(start), e = new Date(end);
+    if (isNaN(s) || isNaN(e)) return;
+    const sKey = manilaDateKey(s), eKey = manilaDateKey(e);
+    let cur = new Date(sKey + "T00:00:00Z");
+    const endD = new Date(eKey + "T00:00:00Z");
+    while (cur <= endD) { set.add(cur.toISOString().slice(0, 10)); cur.setUTCDate(cur.getUTCDate() + 1); }
+  });
+  return set;
+}
+
+function getSelectedDateSet() {
+  const set = new Set();
+  const startVal = document.getElementById("pickupDate").value;
+  const endVal = document.getElementById("returnDate").value;
+  if (!startVal) return set;
+  const start = new Date(startVal); if (isNaN(start)) return set;
+  const sKey = manilaDateKey(start);
+  let endKey = sKey;
+  if (endVal) { const end = new Date(endVal); if (!isNaN(end) && end >= start) endKey = manilaDateKey(end); }
+  let cur = new Date(sKey + "T00:00:00Z");
+  const endD = new Date(endKey + "T00:00:00Z");
+  while (cur <= endD) { set.add(cur.toISOString().slice(0, 10)); cur.setUTCDate(cur.getUTCDate() + 1); }
+  return set;
+}
+
+function rangeOverlapsBlocked(startIso, endIso) {
+  const s = new Date(startIso), e = new Date(endIso);
+  if (isNaN(s) || isNaN(e) || e <= s) return false;
+  const blocked = getBlockedDateSet();
+  const sKey = manilaDateKey(s), eKey = manilaDateKey(e);
+  let cur = new Date(sKey + "T00:00:00Z");
+  const endD = new Date(eKey + "T00:00:00Z");
+  while (cur <= endD) {
+    if (blocked.has(cur.toISOString().slice(0, 10))) return true;
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return false;
+}
+
+function checkDatesAgainstAvailability() {
+  const warning = document.getElementById("datesWarning");
+  if (!warning) return;
+  const p = document.getElementById("pickupDate").value;
+  const r = document.getElementById("returnDate").value;
+  if (!p || !r) { warning.classList.add("hidden"); warning.textContent = ""; return; }
+  if (rangeOverlapsBlocked(addManilaOffsetToLocal(p), addManilaOffsetToLocal(r))) {
+    warning.textContent = "Warning: these dates overlap with a confirmed reservation. Please choose different dates or contact the owner.";
+    warning.classList.remove("hidden");
+  } else { warning.classList.add("hidden"); warning.textContent = ""; }
+}
+
+function renderCalendar() {
+  const grid = document.getElementById("calendarGrid");
+  const label = document.getElementById("calMonthLabel");
+  if (!grid || !label) return;
+  const blocked = getBlockedDateSet(), selected = getSelectedDateSet();
+  const todayKey = manilaDateKey(new Date());
+  label.textContent = new Date(calYear, calMonth, 1).toLocaleDateString("en-PH", { month: "long", year: "numeric" });
+  const startDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  let html = "";
+  for (let i = 0; i < startDay; i++) html += `<div class="aspect-square"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const isBlocked = blocked.has(key), isSelected = selected.has(key), isToday = key === todayKey;
+    let cls = "aspect-square flex items-center justify-center rounded text-sm select-none ";
+    if (isBlocked) cls += "bg-red-100 text-red-700 border border-red-300 cursor-not-allowed ";
+    else if (isSelected) cls += "bg-sky-600 text-white font-bold ";
+    else cls += "bg-slate-100 text-slate-700 ";
+    if (isToday) cls += "ring-2 ring-sky-400 ring-offset-1 ";
+    const title = isBlocked ? "Confirmed reservation — not available" : (isSelected ? "Selected" : "");
+    html += `<div class="${cls}" title="${title}">${d}</div>`;
+  }
+  grid.innerHTML = html;
+  const status = document.getElementById("calStatus");
+  if (status) {
+    if (availabilityError) status.textContent = "Availability could not be loaded. Please tap Refresh or contact the owner.";
+    else if (!availabilityLoaded) status.textContent = "Loading availability…";
+    else if (availabilityRanges.length === 0) status.textContent = "No confirmed reservations on record — all dates shown are open.";
+    else status.textContent = `${blocked.size} confirmed day(s) blocked.`;
+  }
+}
+
+function initCalendar() {
+  const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth();
+  const prev = document.getElementById("calPrev"), next = document.getElementById("calNext"), refresh = document.getElementById("calRefresh");
+  if (prev) prev.addEventListener("click", () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); });
+  if (next) next.addEventListener("click", () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); });
+  if (refresh) refresh.addEventListener("click", loadAvailability);
+  renderCalendar();
+}
+
+/* Terms + form */
+function renderTerms() {
+  const target = document.getElementById("termsPreview");
+  if (!target) return;
+  target.innerHTML = RENTAL_TERMS.map(([h, b]) =>
+    `<section><h3 class="font-bold text-slate-900">${escapeHtml(h)}</h3><p class="text-slate-700">${escapeHtml(b)}</p></section>`
+  ).join("");
+}
+
+function getRentalDays() {
+  const start = new Date(document.getElementById("pickupDate").value);
+  const end = new Date(document.getElementById("returnDate").value);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
+    document.getElementById("totalDays").value = ""; return null;
+  }
+  const days = Math.ceil((end - start) / 86400000);
+  document.getElementById("totalDays").value = String(Math.max(1, days));
+  return Math.max(1, days);
+}
+
+function collectFormData(form) {
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.pickupDate = addManilaOffsetToLocal(data.pickupDate);
+  data.returnDate = addManilaOffsetToLocal(data.returnDate);
+  data.timestamp = new Date().toISOString();
+  data.submittedAt = formatPhilippineDateTime(new Date());
+  data.agreementAccepted = document.getElementById("agreementAccepted").checked ? "Yes" : "No";
+  data.vehicleModel = "MG ZS Lux 2025";
+  data.vehiclePlate = "GBJ 3556";
+  data.vehicleColor = "Black";
+  data.termsVersion = "1.0";
+  return data;
+}
+
+async function submitRental(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const status = document.getElementById("formStatus");
+  const button = document.getElementById("submitBtn");
+  const days = getRentalDays();
+  if (!form.reportValidity()) return;
+  if (!days) { status.textContent = "Return date/time must be later than pick-up date/time."; status.className = "text-sm text-red-700"; return; }
+  if (APPS_SCRIPT_URL.includes("PASTE_YOUR")) { status.textContent = "Setup required: add your deployed Apps Script URL."; status.className = "text-sm text-red-700"; return; }
+  const payload = collectFormData(form);
+  if (rangeOverlapsBlocked(payload.pickupDate, payload.returnDate)) {
+    status.textContent = "The selected dates overlap with a confirmed reservation. Please choose different dates or contact the owner.";
+    status.className = "text-sm text-red-700"; return;
+  }
+  button.disabled = true;
+  status.textContent = "Submitting securely to the configured endpoint…";
+  status.className = "text-sm text-slate-600";
+  try {
+    await fetch(APPS_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+    status.textContent = "Your request was sent. The owner will confirm your reservation by email — your dates are not guaranteed until you receive that confirmation.";
+    status.className = "text-sm text-green-700";
+    form.reset(); document.getElementById("totalDays").value = "";
+    renderCalendar(); checkDatesAgainstAvailability();
+  } catch (error) {
+    console.error(error);
+    status.textContent = "Submission could not be sent. Check your connection or contact the owner.";
+    status.className = "text-sm text-red-700";
+  } finally { button.disabled = false; }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("appVersion").textContent = APP_VERSION;
+  renderTerms(); initCalendar(); loadAvailability();
+  const form = document.getElementById("rentalForm");
+  form.addEventListener("submit", submitRental);
+  ["pickupDate", "returnDate"].forEach(id => {
+    document.getElementById(id).addEventListener("change", () => {
+      getRentalDays();
+      const start = document.getElementById("pickupDate").value;
+      const end = document.getElementById("returnDate").value;
+      if (start && end && new Date(end) <= new Date(start)) {
+        document.getElementById("returnDate").setCustomValidity("Return must be later than pick-up.");
+      } else { document.getElementById("returnDate").setCustomValidity(""); }
+      renderCalendar(); checkDatesAgainstAvailability();
+    });
+  });
+  document.getElementById("dob").max = formatPhilippineDate(new Date());
+  document.getElementById("licenseExpiry").min = formatPhilippineDate(new Date());
+});
+
+document.getElementById("refreshAssetsBtn").addEventListener("click", async () => {
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+  } catch (e) { console.warn("Cache clear failed:", e); }
+  const url = new URL(location.href);
+  url.searchParams.set("v", APP_VERSION + "." + Date.now());
+  location.replace(url.toString());
+});
+
+console.log("%cCar Rental Customer Form v" + APP_VERSION + " loaded", "background:#0f172a;color:#0ea5e9;font-weight:bold;padding:2px 6px;border-radius:4px");
+</script>
+</body>
+</html>
