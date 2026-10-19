@@ -46,6 +46,17 @@ function formatPhilippineDateTime(date = new Date()) {
   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
 }
 
+// Convert a timezone-less datetime-local value (YYYY-MM-DDTHH:mm or with seconds)
+// into an explicit Asia/Manila offset string (e.g. 2026-10-19T10:00:00+08:00).
+function addManilaOffsetToLocal(local) {
+  if (!local) return "";
+  const s = String(local).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return s + ":00+08:00";
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s + "+08:00";
+  // If it already has timezone info or other form, return as-is
+  return s;
+}
+
 function renderTerms() {
   const target = document.getElementById("termsPreview");
   if (!target) return;
@@ -54,7 +65,7 @@ function renderTerms() {
   ).join("");
 }
 function escapeHtml(value) {
-  return String(value).replace(/[&<>\"']/g, ch => ({
+  return String(value).replace(/[&<>"']/g, ch => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   }[ch]));
 }
@@ -71,14 +82,21 @@ function getRentalDays() {
 }
 function collectFormData(form) {
   const data = Object.fromEntries(new FormData(form).entries());
-  const nowPhil = formatPhilippineDateTime();
+
+  // Make pickup/return explicit Manila time so server/storage won't treat them as UTC
+  data.pickupDate = addManilaOffsetToLocal(data.pickupDate);
+  data.returnDate = addManilaOffsetToLocal(data.returnDate);
+
+  // Store a canonical UTC timestamp for the submission (good practice for storage)
+  data.timestamp = new Date().toISOString();
+  // Also include a human-readable Manila timestamp for convenience
+  data.submittedAt = formatPhilippineDateTime(new Date());
+
   data.agreementAccepted = document.getElementById("agreementAccepted").checked ? "Yes" : "No";
   data.vehicleModel = "MG ZS Lux 2025";
   data.vehiclePlate = "GBJ 3556";
   data.vehicleColor = "Black";
   data.termsVersion = "1.0";
-  data.timestamp = nowPhil;
-  data.submittedAt = nowPhil;
   return data;
 }
 async function submitRental(event) {
