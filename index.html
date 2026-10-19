@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — CUSTOMER FORM
-  VERSION: 2.0.0
+  VERSION: 2.1.0 (Time-based Blocking Update)
   UPDATED: 2026-10-19
   This file contains ALL customer-side code (HTML + CSS + JS).
   No external app.js needed. To update: replace this whole file.
@@ -13,7 +13,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <meta name="app-version" content="2.0.0">
+  <meta name="app-version" content="2.1.0">
   <title>Car Rental Agreement | MG ZS Lux 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -60,7 +60,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <h2 class="text-lg font-bold">Vehicle availability</h2>
-          <p class="text-sm text-slate-600">Confirmed reservations block those dates. Pick different dates if yours are blocked.</p>
+          <p class="text-sm text-slate-600">Days highlighted in <span class="font-semibold text-amber-600">Amber</span> have existing reservations. You can still select these days if your specific time doesn't overlap.</p>
         </div>
         <div class="flex items-center gap-2">
           <button type="button" id="calRefresh" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-2 text-sm">Refresh</button>
@@ -75,10 +75,10 @@
       <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
       <div class="flex flex-wrap gap-4 mt-4 text-xs text-slate-600">
         <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-slate-100 border border-slate-300"></span>Open</span>
-        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-red-100 border border-red-300"></span>Confirmed reservation</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-amber-100 border border-amber-300"></span>Has Bookings (Check Times)</span>
         <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-sky-600"></span>Your selection</span>
       </div>
-      <p id="datesWarning" class="hidden text-sm text-red-700 mt-3" role="alert"></p>
+      <p id="datesWarning" class="hidden text-sm text-red-700 mt-3 font-semibold" role="alert"></p>
       <p id="calStatus" class="text-xs text-slate-500 mt-3" role="status" aria-live="polite"></p>
     </section>
 
@@ -143,9 +143,9 @@
 
 <script>
 /* ============================================================================
-   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.0.0)
+   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.1.0)
    ============================================================================ */
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "2.1.0";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const PH_TIMEZONE = "Asia/Manila";
 
@@ -226,18 +226,27 @@ async function loadAvailability() {
   checkDatesAgainstAvailability();
 }
 
-function getBlockedDateSet() {
-  const set = new Set();
-  availabilityRanges.forEach(({ start, end }) => {
-    if (!start || !end) return;
-    const s = new Date(start), e = new Date(end);
+// Map days to show "Has Bookings" amber coloring. 
+// Doesn't fully block the day, just visually warns the user to check times.
+function getBlockedDayMap() {
+  const map = new Map();
+  availabilityRanges.forEach(range => {
+    if (!range.start || !range.end) return;
+    const s = new Date(range.start);
+    const e = new Date(range.end);
     if (isNaN(s) || isNaN(e)) return;
-    const sKey = manilaDateKey(s), eKey = manilaDateKey(e);
+    
+    const sKey = manilaDateKey(s);
+    const eKey = manilaDateKey(e);
+    
     let cur = new Date(sKey + "T00:00:00Z");
     const endD = new Date(eKey + "T00:00:00Z");
-    while (cur <= endD) { set.add(cur.toISOString().slice(0, 10)); cur.setUTCDate(cur.getUTCDate() + 1); }
+    while (cur <= endD) {
+      map.set(cur.toISOString().slice(0, 10), true);
+      cur.setUTCDate(cur.getUTCDate() + 1);
+    }
   });
-  return set;
+  return map;
 }
 
 function getSelectedDateSet() {
@@ -255,16 +264,21 @@ function getSelectedDateSet() {
   return set;
 }
 
+// EXACT TIME OVERLAP: Returns true if user's requested times collide with a booking
 function rangeOverlapsBlocked(startIso, endIso) {
-  const s = new Date(startIso), e = new Date(endIso);
+  const s = new Date(startIso).getTime();
+  const e = new Date(endIso).getTime();
   if (isNaN(s) || isNaN(e) || e <= s) return false;
-  const blocked = getBlockedDateSet();
-  const sKey = manilaDateKey(s), eKey = manilaDateKey(e);
-  let cur = new Date(sKey + "T00:00:00Z");
-  const endD = new Date(eKey + "T00:00:00Z");
-  while (cur <= endD) {
-    if (blocked.has(cur.toISOString().slice(0, 10))) return true;
-    cur.setUTCDate(cur.getUTCDate() + 1);
+  
+  for (const range of availabilityRanges) {
+    const rs = new Date(range.start).getTime();
+    const re = new Date(range.end).getTime();
+    if (isNaN(rs) || isNaN(re)) continue;
+    
+    // Overlap logic: New Start < Existing End AND New End > Existing Start
+    if (s < re && e > rs) {
+      return true;
+    }
   }
   return false;
 }
@@ -275,41 +289,64 @@ function checkDatesAgainstAvailability() {
   const p = document.getElementById("pickupDate").value;
   const r = document.getElementById("returnDate").value;
   if (!p || !r) { warning.classList.add("hidden"); warning.textContent = ""; return; }
+  
   if (rangeOverlapsBlocked(addManilaOffsetToLocal(p), addManilaOffsetToLocal(r))) {
-    warning.textContent = "Warning: these dates overlap with a confirmed reservation. Please choose different dates or contact the owner.";
+    warning.textContent = "⚠️ Warning: The selected times overlap with a confirmed reservation. Please adjust your times.";
     warning.classList.remove("hidden");
-  } else { warning.classList.add("hidden"); warning.textContent = ""; }
+  } else { 
+    warning.classList.add("hidden"); 
+    warning.textContent = ""; 
+  }
 }
 
 function renderCalendar() {
   const grid = document.getElementById("calendarGrid");
   const label = document.getElementById("calMonthLabel");
   if (!grid || !label) return;
-  const blocked = getBlockedDateSet(), selected = getSelectedDateSet();
+  
+  const blockedDays = getBlockedDayMap();
+  const selected = getSelectedDateSet();
   const todayKey = manilaDateKey(new Date());
+  
   label.textContent = new Date(calYear, calMonth, 1).toLocaleDateString("en-PH", { month: "long", year: "numeric" });
   const startDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  
   let html = "";
   for (let i = 0; i < startDay; i++) html += `<div class="aspect-square"></div>`;
+  
   for (let d = 1; d <= daysInMonth; d++) {
     const key = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const isBlocked = blocked.has(key), isSelected = selected.has(key), isToday = key === todayKey;
+    const hasBookings = blockedDays.has(key);
+    const isSelected = selected.has(key);
+    const isToday = key === todayKey;
+    
     let cls = "aspect-square flex items-center justify-center rounded text-sm select-none ";
-    if (isBlocked) cls += "bg-red-100 text-red-700 border border-red-300 cursor-not-allowed ";
-    else if (isSelected) cls += "bg-sky-600 text-white font-bold ";
-    else cls += "bg-slate-100 text-slate-700 ";
+    
+    if (isSelected) {
+      cls += "bg-sky-600 text-white font-bold ";
+    } else if (hasBookings) {
+      cls += "bg-amber-100 text-amber-800 border border-amber-300 font-semibold ";
+    } else {
+      cls += "bg-slate-100 text-slate-700 ";
+    }
+    
     if (isToday) cls += "ring-2 ring-sky-400 ring-offset-1 ";
-    const title = isBlocked ? "Confirmed reservation — not available" : (isSelected ? "Selected" : "");
+    
+    let title = "";
+    if (isSelected) title = "Your selected dates";
+    else if (hasBookings) title = "Has existing reservations — some times may still be available";
+    
     html += `<div class="${cls}" title="${title}">${d}</div>`;
   }
   grid.innerHTML = html;
+  
   const status = document.getElementById("calStatus");
   if (status) {
     if (availabilityError) status.textContent = "Availability could not be loaded. Please tap Refresh or contact the owner.";
     else if (!availabilityLoaded) status.textContent = "Loading availability…";
-    else if (availabilityRanges.length === 0) status.textContent = "No confirmed reservations on record — all dates shown are open.";
-    else status.textContent = `${blocked.size} confirmed day(s) blocked.`;
+    else if (availabilityRanges.length === 0) status.textContent = "No confirmed reservations on record — all times are open.";
+    else status.textContent = `Calendar updated. Select your precise pick-up and return times below.`;
   }
 }
 
@@ -362,17 +399,24 @@ async function submitRental(event) {
   const status = document.getElementById("formStatus");
   const button = document.getElementById("submitBtn");
   const days = getRentalDays();
+  
   if (!form.reportValidity()) return;
   if (!days) { status.textContent = "Return date/time must be later than pick-up date/time."; status.className = "text-sm text-red-700"; return; }
   if (APPS_SCRIPT_URL.includes("PASTE_YOUR")) { status.textContent = "Setup required: add your deployed Apps Script URL."; status.className = "text-sm text-red-700"; return; }
+  
   const payload = collectFormData(form);
+  
+  // Final safety check against overlaps
   if (rangeOverlapsBlocked(payload.pickupDate, payload.returnDate)) {
-    status.textContent = "The selected dates overlap with a confirmed reservation. Please choose different dates or contact the owner.";
-    status.className = "text-sm text-red-700"; return;
+    status.textContent = "Submission blocked: The selected times overlap with a confirmed reservation. Please adjust your times.";
+    status.className = "text-sm text-red-700 font-semibold"; 
+    return;
   }
+  
   button.disabled = true;
   status.textContent = "Submitting securely to the configured endpoint…";
   status.className = "text-sm text-slate-600";
+  
   try {
     await fetch(APPS_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
     status.textContent = "Your request was sent. The owner will confirm your reservation by email — your dates are not guaranteed until you receive that confirmation.";
@@ -389,8 +433,10 @@ async function submitRental(event) {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("appVersion").textContent = APP_VERSION;
   renderTerms(); initCalendar(); loadAvailability();
+  
   const form = document.getElementById("rentalForm");
   form.addEventListener("submit", submitRental);
+  
   ["pickupDate", "returnDate"].forEach(id => {
     document.getElementById(id).addEventListener("change", () => {
       getRentalDays();
@@ -399,9 +445,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (start && end && new Date(end) <= new Date(start)) {
         document.getElementById("returnDate").setCustomValidity("Return must be later than pick-up.");
       } else { document.getElementById("returnDate").setCustomValidity(""); }
-      renderCalendar(); checkDatesAgainstAvailability();
+      
+      renderCalendar(); 
+      checkDatesAgainstAvailability();
     });
   });
+  
   document.getElementById("dob").max = formatPhilippineDate(new Date());
   document.getElementById("licenseExpiry").min = formatPhilippineDate(new Date());
 });
