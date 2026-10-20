@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — CUSTOMER FORM
-  VERSION: 2.4.0 (Audited Complete Build)
+  VERSION: 2.5.0 (Audited Complete Build)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,7 +11,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <meta name="app-version" content="2.4.0">
+  <meta name="app-version" content="2.5.0">
   <title>Car Rental Agreement | MG ZS Lux 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -137,7 +137,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <h2 class="text-lg font-bold">Vehicle availability</h2>
-          <p class="text-sm text-slate-600">Days highlighted in <span class="font-semibold text-amber-600">Amber</span> have existing reservations. You can still select these days if your specific time doesn't overlap.</p>
+          <p class="text-sm text-slate-600">Select dates below. We'll warn you if your specific times overlap with an existing reservation.</p>
         </div>
         <div class="flex items-center gap-2">
           <button type="button" id="calRefresh" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-2 text-sm">Refresh</button>
@@ -154,10 +154,13 @@
       
       <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
       
+      <!-- Updated Legend -->
       <div class="flex flex-wrap gap-4 mt-4 text-xs text-slate-600">
-        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-slate-100 border border-slate-300"></span>Open</span>
-        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-amber-100 border border-amber-300"></span>Has Bookings (Check Times)</span>
-        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-sky-600"></span>Your selection</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-gray-200 border border-gray-300"></span>Past</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-green-100 border border-green-300"></span>Available</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-amber-100 border border-amber-300"></span>Partially Booked</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-red-100 border border-red-300"></span>Fully Booked</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-sky-600"></span>Your Selection</span>
       </div>
 
       <!-- Explicit list of unavailable times -->
@@ -331,9 +334,9 @@
 
 <script>
 /* ============================================================================
-   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.4.0)
+   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.5.0)
    ============================================================================ */
-const APP_VERSION = "2.4.0";
+const APP_VERSION = "2.5.0";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const PH_TIMEZONE = "Asia/Manila";
 
@@ -516,25 +519,60 @@ function renderUnavailableList() {
   container.classList.remove("hidden");
 }
 
-function getBlockedDayMap() {
-  const map = new Map();
+function getDayBookingStatus(dateKey) {
+  const now = new Date();
+  const dayStart = new Date(`${dateKey}T00:00:00+08:00`).getTime();
+  const dayEnd = new Date(`${dateKey}T23:59:59+08:00`).getTime();
+  
+  // 1. Check if the day is entirely in the past
+  if (dayEnd < now.getTime()) return 'past';
+
+  let hasBookings = false;
+  let intervals = [];
+
+  // 2. Collect all booked intervals for this specific day
   availabilityRanges.forEach(range => {
-    if (!range.start || !range.end) return;
-    const s = new Date(range.start);
-    const e = new Date(range.end);
-    if (isNaN(s) || isNaN(e)) return;
+    const rStart = new Date(range.start).getTime();
+    const rEnd = new Date(range.end).getTime();
     
-    const sKey = manilaDateKey(s);
-    const eKey = manilaDateKey(e);
-    
-    let cur = new Date(sKey + "T00:00:00Z");
-    const endD = new Date(eKey + "T00:00:00Z");
-    while (cur <= endD) {
-      map.set(cur.toISOString().slice(0, 10), true);
-      cur.setUTCDate(cur.getUTCDate() + 1);
+    // If the booking overlaps with this day
+    if (rStart <= dayEnd && rEnd >= dayStart) {
+      hasBookings = true;
+      
+      // Calculate the start and end minutes of this day (0 to 1440)
+      const startMin = Math.max(0, (rStart - dayStart) / 60000);
+      const endMin = Math.min(1440, (rEnd - dayStart) / 60000);
+      
+      if (startMin < endMin) {
+        intervals.push([startMin, endMin]);
+      }
     }
   });
-  return map;
+
+  if (!hasBookings) return 'available';
+
+  // 3. Merge intervals to see if they cover the whole day (0 to 1440)
+  intervals.sort((a, b) => a[0] - b[0]);
+  let merged = [];
+  for (let interval of intervals) {
+    if (merged.length === 0) {
+      merged.push(interval);
+    } else {
+      let last = merged[merged.length - 1];
+      if (interval[0] <= last[1] + 1) {
+        last[1] = Math.max(last[1], interval[1]);
+      } else {
+        merged.push(interval);
+      }
+    }
+  }
+
+  // If the interval starts at 0 and ends at 1440, it's fully booked
+  if (merged.length === 1 && merged[0][0] <= 0 && merged[0][1] >= 1440) {
+    return 'full';
+  }
+  
+  return 'partial';
 }
 
 function getSelectedDateSet() {
@@ -604,7 +642,6 @@ function renderCalendar() {
   const label = document.getElementById("calMonthLabel");
   if (!grid || !label) return;
   
-  const blockedDays = getBlockedDayMap();
   const selected = getSelectedDateSet();
   const todayKey = manilaDateKey(new Date());
   
@@ -617,19 +654,34 @@ function renderCalendar() {
   
   for (let d = 1; d <= daysInMonth; d++) {
     const key = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const hasBookings = blockedDays.has(key);
     const isSelected = selected.has(key);
     const isToday = key === todayKey;
     
     let cls = "aspect-square flex items-center justify-center rounded text-sm select-none ";
-    
-    if (isSelected) cls += "bg-sky-600 text-white font-bold ";
-    else if (hasBookings) cls += "bg-amber-100 text-amber-800 border border-amber-300 font-semibold ";
-    else cls += "bg-slate-100 text-slate-700 ";
+    let title = "";
+
+    if (isSelected) {
+      cls += "bg-sky-600 text-white font-bold ";
+      title = "Your selection";
+    } else {
+      const status = getDayBookingStatus(key);
+      if (status === 'past') {
+        cls += "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60 ";
+        title = "Past date";
+      } else if (status === 'full') {
+        cls += "bg-red-100 text-red-800 border border-red-300 font-semibold ";
+        title = "Fully booked";
+      } else if (status === 'partial') {
+        cls += "bg-amber-100 text-amber-800 border border-amber-300 font-semibold ";
+        title = "Partially booked (some times available)";
+      } else {
+        cls += "bg-green-100 text-green-800 border border-green-300 ";
+        title = "Available";
+      }
+    }
     
     if (isToday) cls += "ring-2 ring-sky-400 ring-offset-1 ";
     
-    let title = isSelected ? "Your selected dates" : (hasBookings ? "Has existing reservations — see list below" : "");
     html += `<div class="${cls}" title="${title}">${d}</div>`;
   }
   grid.innerHTML = html;
@@ -638,7 +690,6 @@ function renderCalendar() {
   if (status) {
     if (availabilityError) status.textContent = "Availability could not be loaded. Please tap Refresh or contact the owner.";
     else if (!availabilityLoaded) status.textContent = "Loading availability…";
-    else if (availabilityRanges.length === 0) status.textContent = "No confirmed reservations on record — all times are open.";
     else status.textContent = `Calendar updated. Select your precise pick-up and return times below.`;
   }
 }
