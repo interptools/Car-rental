@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — CUSTOMER FORM
-  VERSION: 2.5.0 (Audited Complete Build)
+  VERSION: 2.6.0 (Audited Complete Build)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,7 +11,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <meta name="app-version" content="2.5.0">
+  <meta name="app-version" content="2.6.0">
   <title>Car Rental Agreement | MG ZS Lux 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -20,6 +20,12 @@
     .field:focus { outline: 2px solid #38bdf8; outline-offset: 1px; }
     label { font-size: .875rem; font-weight: 600; color: #334155; }
     
+    /* Custom scrollbar for terms */
+    .terms-scroll::-webkit-scrollbar { width: 6px; }
+    .terms-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+    .terms-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+    .terms-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
     @media print {
       #termsPreview { max-height: none !important; overflow: visible !important; }
       #termsPreview section { page-break-inside: avoid; }
@@ -137,7 +143,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <h2 class="text-lg font-bold">Vehicle availability</h2>
-          <p class="text-sm text-slate-600">Select dates below. We'll warn you if your specific times overlap with an existing reservation.</p>
+          <p class="text-sm text-slate-600">Select dates below. We'll warn you if your specific times overlap with an existing reservation. (A 1-hour turnaround buffer is required between bookings).</p>
         </div>
         <div class="flex items-center gap-2">
           <button type="button" id="calRefresh" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-2 text-sm">Refresh</button>
@@ -240,11 +246,11 @@
         <h2 class="text-lg font-bold mb-4">2. Rental and vehicle condition</h2>
         <div class="grid md:grid-cols-2 gap-4">
           <div>
-            <label for="pickupDate">Pick-up date and time *</label>
+            <label for="pickupDate">Pick-up date and time (PHT) *</label>
             <input class="field mt-1" id="pickupDate" name="pickupDate" type="datetime-local" required>
           </div>
           <div>
-            <label for="returnDate">Return date and time *</label>
+            <label for="returnDate">Return date and time (PHT) *</label>
             <input class="field mt-1" id="returnDate" name="returnDate" type="datetime-local" required>
           </div>
           <div>
@@ -279,18 +285,30 @@
         <h2 class="text-lg font-bold mb-3">3. Rental agreement terms</h2>
         <p class="text-sm text-slate-600 mb-4">Read the terms below. These are a starter template and should be reviewed for your actual rental operation and applicable Philippine law before use.</p>
         
-        <div id="termsPreview" class="space-y-4 text-sm leading-6 border border-slate-200 rounded-xl p-4 bg-slate-50"></div>
+        <!-- Scrollable Terms Box -->
+        <div id="termsPreview" class="terms-scroll space-y-4 text-sm leading-6 border border-slate-200 rounded-xl p-4 bg-slate-50 max-h-64 overflow-y-auto"></div>
+        <p class="text-xs text-slate-500 mt-1 text-right">Scroll to read all terms</p>
         
-        <label class="flex gap-3 items-start mt-5 p-4 rounded-xl border border-sky-200 bg-sky-50">
-          <input id="agreementAccepted" name="agreementAccepted" type="checkbox" required class="mt-1 h-5 w-5 accent-sky-600">
-          <span class="font-semibold">I have read, understood, and agree to all terms and conditions of this rental agreement. *</span>
-        </label>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-5 p-4 rounded-xl border border-sky-200 bg-sky-50 gap-3">
+          <label class="flex gap-3 items-start cursor-pointer">
+            <input id="agreementAccepted" name="agreementAccepted" type="checkbox" required class="mt-1 h-5 w-5 accent-sky-600 flex-shrink-0">
+            <span class="font-semibold text-sm">I have read, understood, and agree to all terms and conditions of this rental agreement. *</span>
+          </label>
+          <button type="button" id="openPrivacyBtn" class="text-sm text-sky-700 font-bold hover:underline whitespace-nowrap self-start sm:self-center">View Data Privacy Notice</button>
+        </div>
         <p class="text-xs text-slate-500 mt-2">Only submit information you are authorized to provide. Your details and ID information will be stored in the owner's Google Sheet.</p>
       </section>
 
+      <!-- Live Summary Box -->
+      <div id="bookingSummary" class="hidden bg-sky-50 border border-sky-200 rounded-xl p-4 text-sm text-sky-900 mb-2">
+        <p id="summaryText"></p>
+      </div>
+
       <!-- Submit Button -->
       <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <button id="submitBtn" type="submit" class="rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white font-bold px-6 py-3">Submit rental details</button>
+        <button id="submitBtn" type="submit" class="rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-60 text-white font-bold px-6 py-3 min-w-[200px] transition-colors">
+          Submit rental details
+        </button>
         <p id="formStatus" role="status" aria-live="polite" class="text-sm text-slate-600"></p>
       </div>
     </form>
@@ -300,6 +318,35 @@
       <br><span class="ver">Customer form v<span id="appVersion">—</span></span>
     </footer>
   </main>
+
+  <!-- ========================================== -->
+  <!-- PRIVACY MODAL                              -->
+  <!-- ========================================== -->
+  <div id="privacyModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-slate-900">Data Privacy Notice</h3>
+        <button id="closePrivacyBtn" class="text-slate-400 hover:text-slate-800 text-2xl leading-none">&times;</button>
+      </div>
+      <div class="overflow-y-auto pr-2 space-y-4 text-sm text-slate-600">
+        <p>To process your vehicle rental and comply with legal requirements, we collect and store the following personal information:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Full Name, Contact Number, and Address</li>
+          <li>Email Address and Date of Birth</li>
+          <li>Driver's License Number and Expiry</li>
+          <li>Government ID Type and Number</li>
+          <li>Emergency Contact Details</li>
+        </ul>
+        <p><strong>How we use your data:</strong> Your information is used strictly to verify your identity, draft the rental agreement, and contact you regarding your reservation or emergencies. </p>
+        <p><strong>Storage & Security:</strong> Your data is securely stored in a restricted Google Sheet. We do not sell or share your data with third parties, except as required by law or insurance claims.</p>
+        <p><strong>Retention:</strong> We retain your data only for as long as necessary to fulfill the rental agreement and comply with local laws.</p>
+        <p>By checking the agreement box, you consent to the collection and use of your data as described above.</p>
+      </div>
+      <div class="mt-6 text-right">
+        <button id="closePrivacyBtn2" class="rounded-lg bg-slate-900 text-white font-bold px-6 py-2">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ========================================== -->
   <!-- SUCCESS MODAL (SHOWS AFTER SUBMISSION)     -->
@@ -334,11 +381,12 @@
 
 <script>
 /* ============================================================================
-   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.5.0)
+   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.6.0)
    ============================================================================ */
-const APP_VERSION = "2.5.0";
+const APP_VERSION = "2.6.0";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const PH_TIMEZONE = "Asia/Manila";
+const BUFFER_MINUTES = 60; // 1-hour turnaround buffer
 
 const RENTAL_TERMS = [
   ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement."],
@@ -356,25 +404,15 @@ const RENTAL_TERMS = [
 
 function formatPhilippineDate(date = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: PH_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
+    timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit"
   }).format(date).replace(/\//g, "-");
 }
 
 function formatPhilippineDateTime(date = new Date()) {
   const parts = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: PH_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
+    timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
   }).formatToParts(date);
-  
   const values = {};
   for (const part of parts) {
     if (part.type !== "literal") values[part.type] = part.value;
@@ -392,10 +430,7 @@ function addManilaOffsetToLocal(local) {
 
 function manilaDateKey(date) {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: PH_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
+    timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit"
   }).format(date);
 }
 
@@ -410,13 +445,8 @@ function formatFriendlyDateTime(isoStr) {
   const d = new Date(isoStr);
   if (isNaN(d)) return "";
   return d.toLocaleString("en-PH", {
-    timeZone: PH_TIMEZONE,
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true
+    timeZone: PH_TIMEZONE, month: "short", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit", hour12: true
   });
 }
 
@@ -498,6 +528,7 @@ async function loadAvailability() {
   renderCalendar();
   renderUnavailableList();
   checkDatesAgainstAvailability();
+  updateSummary();
 }
 
 function renderUnavailableList() {
@@ -524,53 +555,37 @@ function getDayBookingStatus(dateKey) {
   const dayStart = new Date(`${dateKey}T00:00:00+08:00`).getTime();
   const dayEnd = new Date(`${dateKey}T23:59:59+08:00`).getTime();
   
-  // 1. Check if the day is entirely in the past
   if (dayEnd < now.getTime()) return 'past';
 
   let hasBookings = false;
   let intervals = [];
 
-  // 2. Collect all booked intervals for this specific day
   availabilityRanges.forEach(range => {
     const rStart = new Date(range.start).getTime();
     const rEnd = new Date(range.end).getTime();
     
-    // If the booking overlaps with this day
     if (rStart <= dayEnd && rEnd >= dayStart) {
       hasBookings = true;
-      
-      // Calculate the start and end minutes of this day (0 to 1440)
       const startMin = Math.max(0, (rStart - dayStart) / 60000);
       const endMin = Math.min(1440, (rEnd - dayStart) / 60000);
-      
-      if (startMin < endMin) {
-        intervals.push([startMin, endMin]);
-      }
+      if (startMin < endMin) intervals.push([startMin, endMin]);
     }
   });
 
   if (!hasBookings) return 'available';
 
-  // 3. Merge intervals to see if they cover the whole day (0 to 1440)
   intervals.sort((a, b) => a[0] - b[0]);
   let merged = [];
   for (let interval of intervals) {
-    if (merged.length === 0) {
-      merged.push(interval);
-    } else {
+    if (merged.length === 0) merged.push(interval);
+    else {
       let last = merged[merged.length - 1];
-      if (interval[0] <= last[1] + 1) {
-        last[1] = Math.max(last[1], interval[1]);
-      } else {
-        merged.push(interval);
-      }
+      if (interval[0] <= last[1] + 1) last[1] = Math.max(last[1], interval[1]);
+      else merged.push(interval);
     }
   }
 
-  // If the interval starts at 0 and ends at 1440, it's fully booked
-  if (merged.length === 1 && merged[0][0] <= 0 && merged[0][1] >= 1440) {
-    return 'full';
-  }
+  if (merged.length === 1 && merged[0][0] <= 0 && merged[0][1] >= 1440) return 'full';
   
   return 'partial';
 }
@@ -601,16 +616,21 @@ function getSelectedDateSet() {
   return set;
 }
 
+// Improved Overlap Logic with Buffer
 function rangeOverlapsBlocked(startIso, endIso) {
   const s = new Date(startIso).getTime();
   const e = new Date(endIso).getTime();
   if (isNaN(s) || isNaN(e) || e <= s) return false;
   
+  const bufferMs = BUFFER_MINUTES * 60000;
+  
   for (const range of availabilityRanges) {
     const rs = new Date(range.start).getTime();
     const re = new Date(range.end).getTime();
     if (isNaN(rs) || isNaN(re)) continue;
-    if (s < re && e > rs) return true;
+    
+    // Check standard overlap + add buffer to existing booking end and subtract from existing booking start
+    if (s < (re + bufferMs) && e > (rs - bufferMs)) return true;
   }
   return false;
 }
@@ -629,12 +649,29 @@ function checkDatesAgainstAvailability() {
   }
   
   if (rangeOverlapsBlocked(addManilaOffsetToLocal(p), addManilaOffsetToLocal(r))) {
-    warning.innerHTML = "⚠️ <strong>Time Conflict:</strong> The times you selected overlap with an existing confirmed booking. Please adjust your pick-up or return time.";
+    warning.innerHTML = "⚠️ <strong>Time Conflict:</strong> The times you selected overlap with an existing booking, or fall within the required 1-hour turnaround buffer. Please adjust your times.";
     warning.classList.remove("hidden");
   } else {
     warning.classList.add("hidden");
     warning.textContent = "";
   }
+}
+
+function updateSummary() {
+  const p = document.getElementById("pickupDate").value;
+  const r = document.getElementById("returnDate").value;
+  const summary = document.getElementById("bookingSummary");
+  const summaryText = document.getElementById("summaryText");
+  
+  if (p && r) {
+    const days = getRentalDays();
+    if (days) {
+      summaryText.innerHTML = `You are requesting <strong>${days} day(s)</strong> from <strong>${formatFriendlyDateTime(addManilaOffsetToLocal(p))}</strong> to <strong>${formatFriendlyDateTime(addManilaOffsetToLocal(r))}</strong>.`;
+      summary.classList.remove("hidden");
+      return;
+    }
+  }
+  summary.classList.add("hidden");
 }
 
 function renderCalendar() {
@@ -688,9 +725,13 @@ function renderCalendar() {
   
   const status = document.getElementById("calStatus");
   if (status) {
-    if (availabilityError) status.textContent = "Availability could not be loaded. Please tap Refresh or contact the owner.";
-    else if (!availabilityLoaded) status.textContent = "Loading availability…";
-    else status.textContent = `Calendar updated. Select your precise pick-up and return times below.`;
+    if (availabilityError) {
+      status.innerHTML = `Availability could not be loaded. <button type="button" onclick="loadAvailability()" class="text-sky-600 font-bold underline ml-1 hover:text-sky-800">Retry</button> or contact the owner.`;
+    } else if (!availabilityLoaded) {
+      status.textContent = "Loading availability…";
+    } else {
+      status.textContent = `Calendar updated. Select your precise pick-up and return times below.`;
+    }
   }
 }
 
@@ -725,7 +766,7 @@ function renderTerms() {
   const target = document.getElementById("termsPreview");
   if (!target) return;
   target.innerHTML = RENTAL_TERMS.map(([h, b]) =>
-    `<section><h3 class="font-bold text-slate-900">${escapeHtml(h)}</h3><p class="text-slate-700">${escapeHtml(b)}</p></section>`
+    `<section><h3 class="font-bold text-slate-900 mb-1">${escapeHtml(h)}</h3><p class="text-slate-700">${escapeHtml(b)}</p></section>`
   ).join("");
 }
 
@@ -763,6 +804,7 @@ async function submitRental(event) {
   const form = event.currentTarget;
   const status = document.getElementById("formStatus");
   const button = document.getElementById("submitBtn");
+  const originalBtnHTML = button.innerHTML;
   const days = getRentalDays();
   
   if (!form.reportValidity()) return;
@@ -782,12 +824,15 @@ async function submitRental(event) {
   const payload = collectFormData(form);
   
   if (rangeOverlapsBlocked(payload.pickupDate, payload.returnDate)) {
-    status.textContent = "Submission blocked: The selected times overlap with a confirmed reservation. Please adjust your times.";
+    status.textContent = "Submission blocked: The selected times overlap with a confirmed reservation or buffer time. Please adjust.";
     status.className = "text-sm text-red-700 font-semibold"; 
     return;
   }
   
+  // Update Button UI to Loading Spinner
   button.disabled = true;
+  button.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Submitting...`;
+  
   status.textContent = "Submitting securely to the configured endpoint…";
   status.className = "text-sm text-slate-600";
   
@@ -802,6 +847,8 @@ async function submitRental(event) {
     status.textContent = "";
     form.reset(); 
     document.getElementById("totalDays").value = "";
+    document.getElementById("bookingSummary").classList.add("hidden");
+    
     renderCalendar(); 
     checkDatesAgainstAvailability();
     document.getElementById("successModal").classList.remove("hidden");
@@ -812,6 +859,7 @@ async function submitRental(event) {
     status.className = "text-sm text-red-700";
   } finally {
     button.disabled = false;
+    button.innerHTML = originalBtnHTML;
   }
 }
 
@@ -841,15 +889,23 @@ document.addEventListener("DOMContentLoaded", () => {
       
       renderCalendar(); 
       checkDatesAgainstAvailability();
+      updateSummary();
     });
   });
   
   document.getElementById("dob").max = formatPhilippineDate(new Date());
   document.getElementById("licenseExpiry").min = formatPhilippineDate(new Date());
 
+  // Success Modal Logic
   document.getElementById("closeSuccessModal").addEventListener("click", () => {
     document.getElementById("successModal").classList.add("hidden");
   });
+
+  // Privacy Modal Logic
+  const privacyModal = document.getElementById("privacyModal");
+  document.getElementById("openPrivacyBtn").addEventListener("click", () => privacyModal.classList.remove("hidden"));
+  document.getElementById("closePrivacyBtn").addEventListener("click", () => privacyModal.classList.add("hidden"));
+  document.getElementById("closePrivacyBtn2").addEventListener("click", () => privacyModal.classList.add("hidden"));
 });
 
 document.getElementById("refreshAssetsBtn").addEventListener("click", async () => {
