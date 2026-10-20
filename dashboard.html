@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — OWNER DASHBOARD
-  VERSION: 2.3.0 (Deep Audit & Full Restore)
+  VERSION: 3.0.1 (Fully Expanded & Audited)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,26 +11,35 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="app-version" content="2.3.0">
+  <meta name="app-version" content="3.0.1">
   <title>Owner Dashboard | Rental Records</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body{background:#f1f5f9}
-    .field{width:100%;border:1px solid #cbd5e1;border-radius:.6rem;padding:.65rem .75rem;background:white}
-    th,td{padding:.8rem .9rem;text-align:left;vertical-align:top;border-bottom:1px solid #e2e8f0}
-    .terms,.terms p,.terms div,.agreement,.agreement p{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;max-height:none!important;word-wrap:break-word;overflow-wrap:anywhere}
-    .signature-block{display:flex;gap:2.5rem;justify-content:space-between;margin-top:1.5rem;align-items:flex-end;width:100%;box-sizing:border-box}
-    .signature{flex:1 1 45%;display:flex;flex-direction:column;align-items:flex-start;gap:.35rem}
-    .signature .sig-line{width:100%;border-bottom:1px solid #0f172a;height:.6rem}
-    .signature .sig-label{font-size:.875rem;color:#334155}
-    .field-grid{display:grid;grid-template-columns:200px 1fr;column-gap:1rem;row-gap:.5rem;align-items:start;width:100%;box-sizing:border-box}
-    .field-grid .label{font-weight:600;color:#0f172a;padding-right:.25rem}
-    .field-grid .value{color:#0f172a;word-wrap:break-word;white-space:normal}
-    .ver{font-family:ui-monospace,monospace;font-size:10px;color:#64748b}
-    @media print { .field, input, button { box-shadow:none!important; } .signature .sig-line { border-bottom-width:1px; } }
+    body { background: #f1f5f9; }
+    .field { width: 100%; border: 1px solid #cbd5e1; border-radius: .6rem; padding: .65rem .75rem; background: white; }
+    th, td { padding: .8rem .9rem; text-align: left; vertical-align: top; border-bottom: 1px solid #e2e8f0; }
+    
+    /* Toast Animation */
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    .toast { animation: slideIn 0.3s ease-out forwards; }
+    .toast-hide { animation: fadeOut 0.3s ease-out forwards; }
+
+    /* Mobile Card View */
+    .mobile-card { display: none; }
+    @media (max-width: 768px) {
+      .desktop-table { display: none; }
+      .mobile-card { display: block; }
+    }
+
+    .ver { font-family: ui-monospace, monospace; font-size: 10px; color: #64748b; }
   </style>
 </head>
 <body class="text-slate-800">
+  
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"></div>
+
   <header class="bg-slate-900 text-white">
     <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
@@ -39,112 +48,193 @@
         <p class="text-slate-300 text-sm mt-1">Manage rental records and download agreements.</p>
       </div>
       <div class="flex gap-2">
-        <button id="refreshBtn" class="rounded-lg bg-sky-600 hover:bg-sky-700 px-4 py-2 font-semibold">Refresh records</button>
-        <button id="logoutBtn" class="rounded-lg bg-slate-700 hover:bg-slate-800 px-4 py-2 font-semibold">Lock dashboard</button>
+        <button id="settingsBtn" class="hidden rounded-lg bg-slate-700 hover:bg-slate-600 px-4 py-2 font-semibold">⚙️ Settings</button>
+        <button id="refreshBtn" class="hidden rounded-lg bg-sky-600 hover:bg-sky-700 px-4 py-2 font-semibold">Refresh</button>
+        <button id="logoutBtn" class="hidden rounded-lg bg-red-600 hover:bg-red-700 px-4 py-2 font-semibold">Lock</button>
       </div>
     </div>
   </header>
+
   <main class="max-w-7xl mx-auto p-4 md:py-8">
-    <div id="gate" class="max-w-xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
-      <h2 class="text-xl font-bold">Owner sign-in</h2>
-      <p class="text-sm text-slate-600 mt-2">Enter the dashboard key configured in Google Apps Script project properties.</p>
-      <form id="loginForm" class="mt-5 space-y-3">
-        <label class="block text-sm font-semibold" for="adminKey">Dashboard key</label>
-        <input id="adminKey" class="field" type="password" autocomplete="current-password" required>
-        <button class="w-full rounded-lg bg-slate-900 text-white font-bold py-3">Unlock dashboard</button>
-        <p id="loginStatus" class="text-sm text-red-700" role="status"></p>
+    
+    <!-- Gate / Login -->
+    <div id="gate" class="max-w-xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-sm p-6 mt-10">
+      <h2 class="text-xl font-bold text-center">Owner Sign-In</h2>
+      <p class="text-sm text-slate-600 mt-2 text-center">Enter the dashboard key configured in Google Apps Script.</p>
+      <form id="loginForm" class="mt-5 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1" for="adminKey">Dashboard Key</label>
+          <input id="adminKey" class="field" type="password" autocomplete="current-password" required>
+        </div>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="rememberMe" class="h-4 w-4 accent-sky-600">
+          <span class="text-sm text-slate-600 font-medium">Remember me for this session</span>
+        </label>
+        <button class="w-full rounded-lg bg-slate-900 text-white font-bold py-3 hover:bg-slate-800">Unlock Dashboard</button>
+        <p id="loginStatus" class="text-sm text-red-700 font-medium text-center" role="status"></p>
       </form>
     </div>
-    <section id="dashboard" class="hidden">
-      <div class="grid sm:grid-cols-3 gap-4 mb-5">
-        <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-sm text-slate-500">Total records loaded</p><p id="totalRecords" class="text-2xl font-bold">0</p></div>
-        <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-sm text-slate-500">Latest submission</p><p id="latestRecord" class="text-lg font-bold">—</p></div>
-        <div class="bg-white border border-slate-200 rounded-xl p-4"><p class="text-sm text-slate-500">Agreement accepted</p><p id="acceptedCount" class="text-2xl font-bold">0</p></div>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-          <div>
-            <h2 class="font-bold text-lg">Submitted rental records</h2>
-            <p id="loadStatus" class="text-sm text-slate-500 mt-1" role="status">Unlock to load records.</p>
-            <p class="text-sm text-slate-500 mt-1" role="status">Confirming a reservation blocks those dates on the customer availability calendar.</p>
-          </div>
-          <input id="searchInput" class="field md:max-w-sm" placeholder="Search name, phone, email, or plate" aria-label="Search rental records">
+
+    <!-- Dashboard Content -->
+    <section id="dashboard" class="hidden space-y-6">
+      
+      <!-- Top Stats -->
+      <div class="grid sm:grid-cols-4 gap-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <p class="text-sm text-slate-500">Total Records</p>
+          <p id="totalRecords" class="text-2xl font-bold">0</p>
         </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-[1200px] w-full text-sm">
-            <thead class="bg-slate-50 text-slate-600">
-              <tr><th>Timestamp</th><th>Renter</th><th>Contact</th><th>Rental period</th><th>Days</th><th>Vehicle / plate</th><th>Accepted</th><th>Status</th><th>Actions</th></tr>
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <p class="text-sm text-slate-500">Pending Action</p>
+          <p id="pendingCount" class="text-2xl font-bold text-amber-600">0</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <p class="text-sm text-slate-500">Confirmed</p>
+          <p id="confirmedCount" class="text-2xl font-bold text-emerald-600">0</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4">
+          <p class="text-sm text-slate-500">Latest Booking</p>
+          <p id="latestRecord" class="text-lg font-bold truncate">—</p>
+        </div>
+      </div>
+
+      <!-- Mini Calendar -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+          <h2 class="font-bold text-lg">Confirmed Bookings Calendar</h2>
+          <span class="text-sm text-slate-500" id="miniCalMonth"></span>
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center text-xs text-slate-500 mb-1 font-bold">
+          <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+        </div>
+        <div id="miniCalendarGrid" class="grid grid-cols-7 gap-1 text-sm text-center"></div>
+      </div>
+
+      <!-- Table Controls -->
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center bg-slate-50">
+          <div class="flex gap-2 w-full md:w-auto">
+            <button class="filter-btn active-tab px-4 py-2 rounded-lg font-bold text-sm bg-slate-900 text-white" data-filter="all">All</button>
+            <button class="filter-btn px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-600 border" data-filter="pending">Pending</button>
+            <button class="filter-btn px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-600 border" data-filter="confirmed">Confirmed</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <label class="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
+              <input type="checkbox" id="autoRefreshToggle" class="h-4 w-4 accent-sky-600">
+              Auto-refresh
+            </label>
+            <button id="exportCsvBtn" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-sm font-bold">Export CSV</button>
+            <input id="searchInput" class="field md:max-w-xs" placeholder="Search records...">
+          </div>
+        </div>
+
+        <div class="p-2 text-sm text-slate-500" id="loadStatus">Loaded 0 records.</div>
+
+        <!-- Desktop Table -->
+        <div class="overflow-x-auto desktop-table">
+          <table class="min-w-[1000px] w-full text-sm">
+            <thead class="bg-white text-slate-600 border-b">
+              <tr><th>Timestamp</th><th>Renter</th><th>Rental period</th><th>Vehicle</th><th>Status</th><th>Actions</th></tr>
             </thead>
-            <tbody id="recordsBody"><tr><td colspan="9" class="text-slate-500">No records loaded.</td></tr></tbody>
+            <tbody id="recordsBody"><tr><td colspan="6" class="text-center py-4">No records found.</td></tr></tbody>
           </table>
         </div>
+
+        <!-- Mobile Cards -->
+        <div id="mobileCardsContainer" class="p-4 space-y-4 mobile-card"></div>
+
       </div>
-      <p class="text-xs text-slate-500 mt-4">Customer identity and licence information are sensitive. Keep this dashboard key private and restrict spreadsheet access.</p>
     </section>
+  </main>
 
-    <!-- Hidden HTML agreement template (Restored from original) -->
-    <div id="agreementTemplate" style="display:none;" aria-hidden="true">
-      <article class="agreement bg-white p-6 rounded-lg shadow-sm max-w-3xl mx-auto">
-        <header>
-          <h1 style="font-size:18px;margin:0 0 6px">VEHICLE RENTAL AGREEMENT</h1>
-          <div style="font-size:12px;color:#334155;margin-bottom:12px">MG ZS Lux 2025 | Plate GBJ 3556 | Black</div>
-        </header>
-        <section class="agreement-meta field-grid" style="margin-bottom:12px">
-          <div class="label">Full legal name</div><div class="value">[Full name]</div>
-          <div class="label">Contact number</div><div class="value">[Phone]</div>
-          <div class="label">Address</div><div class="value">[Address]</div>
-          <div class="label">Email</div><div class="value">[Email]</div>
-          <div class="label">Date of birth</div><div class="value">October 26, 2000</div>
-          <div class="label">Driver's licence number</div><div class="value">[Licence]</div>
-          <div class="label">Licence expiry</div><div class="value">October 26, 2026</div>
-        </section>
-        <section class="terms" style="margin-bottom:12px">
-          <h2 style="margin:0 0 8px;font-size:14px">Terms and Conditions</h2>
-          <p style="margin:0 0 8px;line-height:1.4">The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter agrees to return the vehicle in the same condition except for reasonable wear and tear. The rental period begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time. Extensions must be agreed in writing. Fuel policy and security deposit terms are the renter's responsibility as separately agreed.</p>
-        </section>
-        <section class="signature-block">
-          <div class="signature"><div class="sig-line"></div><div class="sig-label">Renter signature / date</div></div>
-          <div class="signature"><div class="sig-line"></div><div class="sig-label">Owner / representative signature / date</div></div>
-        </section>
-      </article>
-    </div>
-
-    <!-- Confirmation email modal -->
-    <div id="emailModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-xl">
-        <div class="flex justify-between items-start mb-3">
-          <div>
-            <h3 class="text-lg font-bold">Confirmation email</h3>
-            <p class="text-sm text-slate-600">Copy this into your email client to send to the renter.</p>
-          </div>
-          <button id="emailModalClose" class="text-slate-500 hover:text-slate-800 text-2xl leading-none" aria-label="Close">&times;</button>
-        </div>
-        <label class="block text-xs font-semibold text-slate-600 mb-1" for="emailTo">To</label>
-        <input id="emailTo" class="field mb-3" readonly>
-        <label class="block text-xs font-semibold text-slate-600 mb-1" for="emailSubject">Subject</label>
-        <input id="emailSubject" class="field mb-3" readonly>
-        <label class="block text-xs font-semibold text-slate-600 mb-1" for="emailBody">Body (editable)</label>
-        <textarea id="emailBody" class="field font-mono text-sm" rows="16"></textarea>
-        <div class="flex flex-wrap gap-2 mt-4">
-          <button id="copyEmailBtn" class="rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2">Copy email</button>
-          <button id="openMailBtn" class="rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2">Open in email app</button>
-          <button id="emailModalClose2" class="rounded-lg border border-slate-300 px-4 py-2">Close</button>
-        </div>
-        <p id="copyStatus" class="text-xs text-green-700 mt-2" role="status" aria-live="polite"></p>
+  <!-- ========================================== -->
+  <!-- SETTINGS MODAL (Email Template)            -->
+  <!-- ========================================== -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold">Email Template Settings</h3>
+        <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-800 text-2xl">&times;</button>
+      </div>
+      <p class="text-sm text-slate-600 mb-2">Use these placeholders in your template. They will be replaced automatically:</p>
+      <div class="bg-slate-100 p-2 rounded text-xs font-mono mb-4 text-slate-700">
+        {name}, {pickup}, {return}, {days}, {vehicle}, {odometer}, {fuel}
+      </div>
+      <textarea id="emailTemplateText" class="field flex-1 font-mono text-sm mb-4" style="min-height: 250px;"></textarea>
+      <div class="flex justify-end gap-2">
+        <button id="resetTemplateBtn" class="rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50">Reset Default</button>
+        <button id="saveTemplateBtn" class="rounded-lg bg-sky-600 text-white px-6 py-2 font-bold hover:bg-sky-700">Save Template</button>
       </div>
     </div>
+  </div>
 
-    <p class="text-xs text-slate-500 mt-4 text-center"><span class="ver">Dashboard v<span id="appVersion">—</span></span></p>
-  </main>
+  <!-- ========================================== -->
+  <!-- EMAIL MODAL                                -->
+  <!-- ========================================== -->
+  <div id="emailModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
+      <div class="flex justify-between items-start mb-3">
+        <div>
+          <h3 id="emailModalTitle" class="text-xl font-bold">Confirmation Email</h3>
+          <p class="text-sm text-slate-600">Copy this into your email client.</p>
+        </div>
+        <button id="emailModalClose" class="text-slate-500 hover:text-slate-800 text-2xl leading-none">&times;</button>
+      </div>
+      <label class="block text-xs font-bold text-slate-600 mb-1">To</label>
+      <input id="emailTo" class="field mb-3 bg-slate-50" readonly>
+      <label class="block text-xs font-bold text-slate-600 mb-1">Subject</label>
+      <input id="emailSubject" class="field mb-3" readonly>
+      <label class="block text-xs font-bold text-slate-600 mb-1">Body (editable)</label>
+      <textarea id="emailBody" class="field font-mono text-sm" rows="14"></textarea>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <button id="copyEmailBtn" class="rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold px-4 py-2">Copy to Clipboard</button>
+        <button id="openMailBtn" class="rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2">Open in Email App</button>
+        <button id="emailModalClose2" class="rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50">Close</button>
+      </div>
+      <p id="copyStatus" class="text-sm text-green-700 font-bold mt-2" role="status"></p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-xs text-slate-500 py-8 text-center bg-slate-50 mt-8">
+    Keep this dashboard key private. Customer data is sensitive.
+    <br><span class="ver">Dashboard v<span id="appVersion">—</span></span>
+  </footer>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ============================================================================
-   OWNER DASHBOARD — inline app code (v2.3.0)
+   OWNER DASHBOARD — inline app code (v3.0.1)
    ============================================================================ */
-const APP_VERSION = "2.3.0";
+const APP_VERSION = "3.0.1";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const PH_TIMEZONE = "Asia/Manila";
+
+const DEFAULT_TEMPLATE = `Hi {name},
+
+Good news — your reservation for the {vehicle} is confirmed.
+
+Rental summary
+- Vehicle: {vehicle}
+- Pick-up: {pickup}
+- Return: {return}
+- Total rental days: {days}
+- Odometer out: {odometer} km
+- Fuel level out: {fuel}
+
+What to bring on pick-up day
+- Your valid driver's licence
+- A government-issued ID
+- The security deposit (if separately agreed)
+- This confirmation email
+
+Please arrive at the agreed pick-up time. If you need to change the dates, contact us in advance — availability is not guaranteed and changes may incur additional charges.
+
+Thank you,
+[Your name]
+[Your contact number]
+[Your email]`;
 
 const TERMS = [
   ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement."],
@@ -160,242 +250,319 @@ const TERMS = [
 
 let adminKey = "";
 let records = [];
+let currentFilter = "all";
+let autoRefreshInterval = null;
+let currentEmailRecord = null;
+
 const $ = id => document.getElementById(id);
 
-// Restored original robust timezone parsing
+/* ------------------------------ Helpers ------------------------------ */
 function parseRecordTimestamp(value) {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value === "string" && /^\d+$/.test(value.trim())) value = Number(value.trim());
   if (typeof value === "number") { 
     const ms = value > 1e12 ? value : value * 1000; 
-    const date = new Date(ms); 
-    return isNaN(date.getTime()) ? null : date; 
+    const d = new Date(ms); 
+    return isNaN(d.getTime()) ? null : d; 
   }
   if (typeof value === "string") {
     let s = value.trim();
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(?:\.\d+)?$/.test(s)) {
-      s = s + ":00+08:00".replace(":00+08:00+08:00", ":00+08:00");
-    }
-    const date = new Date(s);
-    return isNaN(date.getTime()) ? null : date;
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(?:\.\d+)?$/.test(s)) s = s + ":00+08:00".replace(":00+08:00+08:00", ":00+08:00");
+    const d = new Date(s); 
+    return isNaN(d.getTime()) ? null : d;
   }
   return null;
 }
-
-function escapeHtml(v) { return String(v ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch])); }
-function fmt(v) { const d = parseRecordTimestamp(v); return d ? d.toLocaleString("en-PH", { timeZone: PH_TIMEZONE }) : "—"; }
-function formatDate(v) { const d = parseRecordTimestamp(v); return d ? d.toLocaleDateString("en-PH", { timeZone: PH_TIMEZONE, year: "numeric", month: "long", day: "numeric" }) : "—"; }
+function escapeHtml(v) { 
+  return String(v ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch])); 
+}
+function fmt(v) { 
+  const d = parseRecordTimestamp(v); 
+  return d ? d.toLocaleString("en-PH", { timeZone: PH_TIMEZONE, month:"short", day:"numeric", year:"numeric" }) : "—"; 
+}
+function formatDate(v) { 
+  const d = parseRecordTimestamp(v); 
+  return d ? d.toLocaleDateString("en-PH", { timeZone: PH_TIMEZONE, year: "numeric", month: "long", day: "numeric" }) : "—"; 
+}
 function formatDateTime(v) {
-  const d = parseRecordTimestamp(v); if (!d) return "—";
-  const dp = d.toLocaleDateString("en-PH", { timeZone: PH_TIMEZONE, year: "numeric", month: "long", day: "numeric" });
+  const d = parseRecordTimestamp(v); 
+  if (!d) return "—";
+  const dp = d.toLocaleDateString("en-PH", { timeZone: PH_TIMEZONE, month:"short", day:"numeric", year:"numeric" });
   const tp = d.toLocaleTimeString("en-PH", { timeZone: PH_TIMEZONE, hour: "numeric", minute: "2-digit", hour12: true });
   return `${dp} at ${tp}`;
 }
-function period(r) { return `${formatDateTime(r.pickupDate) || "—"} → ${formatDateTime(r.returnDate) || "—"}`; }
-function statusOf(r) { const s = String(r.status || "").trim(); return s ? s : "Pending"; }
+function period(r) { 
+  return `${formatDateTime(r.pickupDate)} <br><span class="text-xs text-slate-400">to</span><br> ${formatDateTime(r.returnDate)}`; 
+}
+function statusOf(r) { 
+  const s = String(r.status || "").trim(); 
+  return s ? s : "Pending"; 
+}
 function parseTermsToArray(t) {
   if (!t) return TERMS;
   if (Array.isArray(t)) return t;
-  if (typeof t === "string") { try { const p = JSON.parse(t); if (Array.isArray(p)) return p; } catch(e){} return [["Terms and Conditions", t]]; }
+  if (typeof t === "string") { 
+    try { const p = JSON.parse(t); if (Array.isArray(p)) return p; } catch(e){} 
+    return [["Terms and Conditions", t]]; 
+  }
   return TERMS;
 }
 
-/* Load */
+function showToast(message, type = "success") {
+  const container = $("toastContainer");
+  const toast = document.createElement("div");
+  const bg = type === "success" ? "bg-emerald-600" : (type === "error" ? "bg-red-600" : "bg-slate-800");
+  toast.className = `toast ${bg} text-white px-6 py-3 rounded-lg shadow-lg font-bold flex items-center gap-2`;
+  toast.innerHTML = message;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add("toast-hide");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+/* ------------------------------ Data Fetching ------------------------------ */
 async function loadRecords() {
   const status = $("loadStatus");
   status.textContent = "Loading records…";
-  if (APPS_SCRIPT_URL.includes("PASTE_YOUR")) { status.textContent = "Setup required."; return; }
   try {
-    const result = await requestRecordsJsonp();
-    if (!result.ok) throw new Error(result.error || "The server rejected the request.");
+    const result = await requestJsonp("list");
+    if (!result.ok) throw new Error(result.error || "Rejected");
     records = Array.isArray(result.records) ? result.records : [];
-    renderRecords();
-    status.textContent = `Loaded ${records.length} record(s) at ${new Date().toLocaleString("en-PH", { timeZone: PH_TIMEZONE })}.`;
+    renderAll();
+    status.textContent = `Last updated: ${new Date().toLocaleTimeString("en-PH", { timeZone: PH_TIMEZONE })}`;
   } catch (error) {
     console.error(error);
-    status.textContent = "Could not load records. Verify URL, deployment, key, and browser console.";
+    status.textContent = "Could not load records. Check connection or key.";
+    status.className = "p-2 text-sm text-red-600 font-bold";
   }
 }
-function requestRecordsJsonp() {
+
+function requestJsonp(action, row = null) {
   return new Promise((resolve, reject) => {
-    const cb = "__rentalRecordsCallback";
-    const prev = window[cb];
+    const cb = "__adminCb_" + Date.now();
     const script = document.createElement("script");
     const url = new URL(APPS_SCRIPT_URL);
     let done = false;
-    const cleanup = () => { if (script.parentNode) script.parentNode.removeChild(script); if (prev === undefined) delete window[cb]; else window[cb] = prev; };
-    const t = setTimeout(() => { if (done) return; done = true; cleanup(); reject(new Error("timeout")); }, 20000);
+    const cleanup = () => { if (script.parentNode) script.parentNode.removeChild(script); delete window[cb]; };
+    const t = setTimeout(() => { if (done) return; done = true; cleanup(); reject(new Error("timeout")); }, 15000);
     window[cb] = r => { if (done) return; done = true; clearTimeout(t); cleanup(); resolve(r); };
     script.onerror = () => { if (done) return; done = true; clearTimeout(t); cleanup(); reject(new Error("network")); };
-    url.searchParams.set("action", "list");
-    url.searchParams.set("key", adminKey);
-    url.searchParams.set("callback", cb);
-    url.searchParams.set("_", String(Date.now()));
-    script.src = url.toString();
-    document.head.appendChild(script);
-  });
-}
-function requestAdminAction(action, row) {
-  return new Promise((resolve, reject) => {
-    const cb = "__adminActionCallback";
-    const prev = window[cb];
-    const script = document.createElement("script");
-    const url = new URL(APPS_SCRIPT_URL);
-    let done = false;
-    const cleanup = () => { if (script.parentNode) script.parentNode.removeChild(script); if (prev === undefined) delete window[cb]; else window[cb] = prev; };
-    const t = setTimeout(() => { if (done) return; done = true; cleanup(); reject(new Error("timeout")); }, 20000);
-    window[cb] = r => { if (done) return; done = true; clearTimeout(t); cleanup(); resolve(r); };
-    script.onerror = () => { if (done) return; done = true; clearTimeout(t); cleanup(); reject(new Error("network")); };
+    
     url.searchParams.set("action", action);
     url.searchParams.set("key", adminKey);
-    url.searchParams.set("row", String(row));
+    if (row) url.searchParams.set("row", String(row));
     url.searchParams.set("callback", cb);
-    url.searchParams.set("_", String(Date.now()));
     script.src = url.toString();
     document.head.appendChild(script);
   });
 }
 
-/* Table */
-function renderRecords() {
-  const q = $("searchInput").value.trim().toLowerCase();
-  const filtered = records.filter(r => [r.fullName, r.contact, r.email, r.vehiclePlate, r.licenseNo].some(v => String(v || "").toLowerCase().includes(q)));
+/* ------------------------------ Render Logic ------------------------------ */
+function renderAll() {
+  // 1. Update Stats
+  const pending = records.filter(r => statusOf(r) === "Pending").length;
+  const confirmed = records.filter(r => statusOf(r) === "Confirmed").length;
   $("totalRecords").textContent = records.length;
-  $("acceptedCount").textContent = records.filter(r => String(r.agreementAccepted).toLowerCase() === "yes").length;
-  const latest = records[records.length - 1];
-  $("latestRecord").textContent = latest ? fmt(latest.timestamp || latest.submittedAt) : "—";
-  const body = $("recordsBody");
+  $("pendingCount").textContent = pending;
+  $("confirmedCount").textContent = confirmed;
+  $("latestRecord").textContent = records.length ? fmt(records[records.length - 1].timestamp) : "—";
+
+  // 2. Render Mini Calendar
+  renderMiniCalendar();
+
+  // 3. Render Table and Mobile Cards
+  const q = $("searchInput").value.trim().toLowerCase();
+  const filtered = records.filter(r => {
+    const matchStatus = currentFilter === "all" || statusOf(r).toLowerCase() === currentFilter;
+    const matchSearch = [r.fullName, r.contact, r.email, r.vehiclePlate, r.licenseNo].some(v => String(v || "").toLowerCase().includes(q));
+    return matchStatus && matchSearch;
+  });
+
+  const tbody = $("recordsBody");
+  const mobileDiv = $("mobileCardsContainer");
+  
   if (!filtered.length) {
-    body.innerHTML = `<tr><td colspan="9" class="text-slate-500">${records.length ? "No records match your search." : "No records found."}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-500">No records match your filter.</td></tr>`;
+    mobileDiv.innerHTML = `<p class="text-center text-slate-500 py-4">No records match your filter.</p>`;
     return;
   }
-  body.innerHTML = filtered.map(r => {
+
+  // Desktop Table
+  tbody.innerHTML = filtered.map(r => {
     const idx = records.indexOf(r);
-    const ts = r.timestamp || r.submittedAt;
     const status = statusOf(r);
-    const statusBadge = status === "Confirmed"
-      ? `<span class="rounded-full px-2 py-1 text-xs bg-emerald-100 text-emerald-800">CONFIRMED</span>`
-      : `<span class="rounded-full px-2 py-1 text-xs bg-amber-100 text-amber-800">PENDING</span>`;
-    const accepted = String(r.agreementAccepted || "").toLowerCase() === "yes";
-    const acceptedBadge = accepted
-      ? `<span class="rounded-full px-2 py-1 text-xs bg-green-100 text-green-800">YES</span>`
-      : `<span class="rounded-full px-2 py-1 text-xs bg-red-100 text-red-800">NO</span>`;
-    const confirmLabel = status === "Confirmed" ? "Unconfirm" : "Confirm";
-    const confirmClass = status === "Confirmed" ? "bg-amber-600 hover:bg-amber-700" : "bg-emerald-600 hover:bg-emerald-700";
-    return `<tr>
-      <td>${escapeHtml(fmt(ts))}</td>
-      <td><strong>${escapeHtml(r.fullName || "—")}</strong><div class="text-xs text-slate-500">${escapeHtml(r.email || "")}</div></td>
-      <td>${escapeHtml(r.contact || "—")}</td>
-      <td>${escapeHtml(period(r))}</td>
-      <td>${escapeHtml(r.totalDays || "—")}</td>
-      <td>${escapeHtml(r.vehicleModel || VEHICLE.model)}<div class="text-xs text-slate-500">${escapeHtml(r.vehiclePlate || VEHICLE.plate)} · ${escapeHtml(r.vehicleColor || VEHICLE.color)}</div></td>
-      <td>${acceptedBadge}</td>
+    const statusBadge = status === "Confirmed" ? `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">CONFIRMED</span>` : `<span class="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold">PENDING</span>`;
+    const confirmBtn = status === "Confirmed" ? `<button class="confirmBtn text-amber-600 hover:underline text-xs font-bold" data-row="${r._row}" data-confirm="false">Unconfirm</button>` : `<button class="confirmBtn text-emerald-600 hover:underline text-xs font-bold" data-row="${r._row}" data-confirm="true">Confirm</button>`;
+    
+    return `<tr class="hover:bg-slate-50 transition-colors">
+      <td class="text-xs text-slate-500">${escapeHtml(fmt(r.timestamp))}</td>
+      <td><strong class="text-slate-800">${escapeHtml(r.fullName)}</strong><div class="text-xs text-slate-500">${escapeHtml(r.email)}</div></td>
+      <td class="text-xs">${period(r)}</td>
+      <td class="text-xs text-slate-600">${escapeHtml(r.vehicleModel || VEHICLE.model)}</td>
       <td>${statusBadge}</td>
-      <td>
-        <div class="flex flex-col gap-1.5">
-          <button class="pdfBtn rounded-lg bg-slate-900 hover:bg-slate-700 text-white px-3 py-1.5 text-xs whitespace-nowrap" data-index="${idx}">PDF</button>
-          <button class="confirmBtn rounded-lg ${confirmClass} text-white px-3 py-1.5 text-xs whitespace-nowrap" data-row="${r._row}" data-confirmed="${status === "Confirmed"}">${confirmLabel}</button>
-          <button class="emailBtn rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-1.5 text-xs whitespace-nowrap" data-index="${idx}">Email</button>
-        </div>
+      <td class="space-x-3 whitespace-nowrap">
+        ${confirmBtn}
+        <button class="pdfBtn text-slate-600 hover:underline text-xs font-bold" data-idx="${idx}">PDF</button>
+        <button class="emailBtn text-sky-600 hover:underline text-xs font-bold" data-idx="${idx}">Email</button>
       </td>
     </tr>`;
   }).join("");
-  body.querySelectorAll(".pdfBtn").forEach(b => b.addEventListener("click", () => {
-    const rec = records[Number(b.dataset.index)]; if (rec) downloadAgreementPdf(rec);
-  }));
-  body.querySelectorAll(".emailBtn").forEach(b => b.addEventListener("click", () => {
-    const rec = records[Number(b.dataset.index)]; if (rec) openEmailModal(rec);
-  }));
-  body.querySelectorAll(".confirmBtn").forEach(b => b.addEventListener("click", () => {
-    const row = Number(b.dataset.row);
-    const rec = records.find(x => Number(x._row) === row);
-    if (rec) toggleConfirm(rec, b.dataset.confirmed === "true");
-  }));
+
+  // Mobile Cards
+  mobileDiv.innerHTML = filtered.map(r => {
+    const idx = records.indexOf(r);
+    const status = statusOf(r);
+    const statusBadge = status === "Confirmed" ? `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">CONFIRMED</span>` : `<span class="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold">PENDING</span>`;
+    
+    return `<div class="border rounded-xl p-4 shadow-sm bg-white space-y-3">
+      <div class="flex justify-between items-start border-b pb-2">
+        <div>
+          <p class="font-bold text-lg">${escapeHtml(r.fullName)}</p>
+          <p class="text-xs text-slate-500">${escapeHtml(r.email)}</p>
+        </div>
+        ${statusBadge}
+      </div>
+      <div class="text-sm text-slate-600">
+        <p><strong>Dates:</strong> ${period(r)}</p>
+        <p><strong>Vehicle:</strong> ${escapeHtml(r.vehicleModel || VEHICLE.model)}</p>
+      </div>
+      <div class="flex flex-wrap gap-2 pt-2 border-t mt-2">
+        <button class="confirmBtn flex-1 text-center py-2 rounded-lg border ${status==="Confirmed"?'border-amber-300 text-amber-700':'bg-emerald-600 text-white'}" data-row="${r._row}" data-confirm="${status!=="Confirmed"}">${status==="Confirmed"?'Unconfirm':'Confirm'}</button>
+        <button class="pdfBtn py-2 px-3 rounded-lg bg-slate-100 text-slate-700 font-bold" data-idx="${idx}">PDF</button>
+        <button class="emailBtn py-2 px-3 rounded-lg bg-sky-100 text-sky-700 font-bold" data-idx="${idx}">Email</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  // Attach Listeners
+  document.querySelectorAll(".confirmBtn").forEach(b => b.addEventListener("click", () => toggleConfirm(b.dataset.row, b.dataset.confirm === "true")));
+  document.querySelectorAll(".pdfBtn").forEach(b => b.addEventListener("click", () => downloadAgreementPdf(records[Number(b.dataset.idx)])));
+  document.querySelectorAll(".emailBtn").forEach(b => b.addEventListener("click", () => openEmailModal(records[Number(b.dataset.idx)])));
 }
 
-async function toggleConfirm(record, isConfirmed) {
-  const name = record.fullName || "this renter";
-  const action = isConfirmed ? "cancel" : "confirm";
-  const verb = isConfirmed ? "Unconfirm" : "Confirm";
-  if (!confirm(`${verb} the reservation for ${name}?`)) return;
-  if (!isConfirmed && String(record.agreementAccepted || "").toLowerCase() !== "yes") {
-    if (!confirm(`This record did not record agreement acceptance. Continue anyway?`)) return;
+function renderMiniCalendar() {
+  const grid = $("miniCalendarGrid");
+  const label = $("miniCalMonth");
+  if (!grid || !label) return;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  label.textContent = new Date(year, month, 1).toLocaleDateString("en-PH", { month: "long", year: "numeric" });
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startDay = new Date(year, month, 1).getDay();
+
+  // Build blocked dates map
+  const blocked = new Set();
+  records.filter(r => statusOf(r) === "Confirmed").forEach(r => {
+    const s = parseRecordTimestamp(r.pickupDate);
+    const e = parseRecordTimestamp(r.returnDate);
+    if (!s || !e) return;
+    let cur = new Date(s.getTime());
+    cur.setHours(0,0,0,0);
+    const endD = new Date(e.getTime());
+    endD.setHours(0,0,0,0);
+    while (cur <= endD) {
+      blocked.add(cur.toISOString().slice(0,10));
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+
+  let html = "";
+  for (let i = 0; i < startDay; i++) html += `<div></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const isBooked = blocked.has(key);
+    let cls = "p-2 rounded-md ";
+    if (isBooked) cls += "bg-red-100 text-red-700 font-bold border border-red-200";
+    else cls += "text-slate-600 hover:bg-slate-50";
+    html += `<div class="${cls}">${d}</div>`;
   }
+  grid.innerHTML = html;
+}
+
+/* ------------------------------ Actions ------------------------------ */
+async function toggleConfirm(row, isConfirm) {
+  const verb = isConfirm ? "Confirm" : "Unconfirm";
+  if (!confirm(`${verb} this booking?`)) return;
   try {
-    const result = await requestAdminAction(action, record._row);
-    if (!result.ok) { alert(`${verb} failed: ${result.error || "unknown error"}`); return; }
-    record.status = action === "confirm" ? "Confirmed" : "Pending";
-    renderRecords();
-    if (action === "confirm") openEmailModal(record);
-    loadRecords();
-  } catch (err) { alert(`${verb} failed: ${err.message}`); }
+    const result = await requestJsonp(isConfirm ? "confirm" : "cancel", row);
+    if (!result.ok) throw new Error(result.error);
+    showToast(`Booking ${verb}ed successfully!`, "success");
+    await loadRecords(); // Reload to refresh status
+    
+    // If confirmed, auto-open the email modal
+    if (isConfirm) {
+      const rec = records.find(r => Number(r._row) === Number(row));
+      if (rec) openEmailModal(rec);
+    }
+  } catch (err) {
+    showToast(`Failed to ${verb.toLowerCase()}: ${err.message}`, "error");
+  }
 }
 
-/* Email modal */
-function buildEmailTemplate(r) {
-  const name = r.fullName || "there";
-  const pickup = formatDateTime(r.pickupDate), ret = formatDateTime(r.returnDate);
-  const vehicle = `${r.vehicleModel || VEHICLE.model} (${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate})`;
-  const subject = `Reservation confirmed — ${r.vehicleModel || VEHICLE.model} for ${pickup}`;
-  const body = `Hi ${name},
-
-Good news — your reservation for the ${vehicle} is confirmed.
-
-Rental summary
-- Vehicle: ${vehicle}
-- Pick-up: ${pickup}
-- Return: ${ret}
-- Total rental days: ${r.totalDays || "—"}
-- Odometer out: ${r.odometerOut || "—"} km
-- Fuel level out: ${r.fuelLevelOut || "—"}
-
-What to bring on pick-up day
-- Your valid driver's licence
-- A government-issued ID
-- The security deposit (if separately agreed)
-- This confirmation email
-
-Please arrive at the agreed pick-up time. If you need to change the dates, contact us in advance — availability is not guaranteed and changes may incur additional charges.
-
-Before driving off, we will walk you through the vehicle condition and fuel level recorded on this agreement. Please review the full rental terms before pick-up; by proceeding with the rental you agree to those terms.
-
-Thank you,
-Reymar Arroyo
-09063964052
-areymar36@gmail.com`;
-  return { to: r.email || "", subject, body };
+/* ------------------------------ Email Modal ------------------------------ */
+function getCustomTemplate() {
+  return localStorage.getItem("rentalEmailTemplate") || DEFAULT_TEMPLATE;
 }
+
+function buildEmailContent(r) {
+  const tpl = getCustomTemplate();
+  return tpl
+    .replace(/{name}/g, r.fullName || "Customer")
+    .replace(/{pickup}/g, formatDateTime(r.pickupDate))
+    .replace(/{return}/g, formatDateTime(r.returnDate))
+    .replace(/{days}/g, r.totalDays || "—")
+    .replace(/{vehicle}/g, `${r.vehicleModel || VEHICLE.model} (${r.vehicleColor || VEHICLE.color}, Plate ${r.vehiclePlate || VEHICLE.plate})`)
+    .replace(/{odometer}/g, r.odometerOut || "—")
+    .replace(/{fuel}/g, r.fuelLevelOut || "—");
+}
+
 function openEmailModal(record) {
-  const modal = $("emailModal"); if (!modal) return;
-  const { to, subject, body } = buildEmailTemplate(record);
-  $("emailTo").value = to; $("emailSubject").value = subject; $("emailBody").value = body;
-  $("copyStatus").textContent = ""; modal.classList.remove("hidden");
+  currentEmailRecord = record;
+  const status = statusOf(record);
+  $("emailModalTitle").textContent = status === "Confirmed" ? "Resend Confirmation Email" : "Preview Email (Draft)";
+  $("emailTo").value = record.email || "";
+  $("emailSubject").value = `Reservation confirmed — ${record.vehicleModel || VEHICLE.model} for ${formatDateTime(record.pickupDate)}`;
+  $("emailBody").value = buildEmailContent(record);
+  $("copyStatus").textContent = "";
+  $("emailModal").classList.remove("hidden");
 }
-function closeEmailModal() { const m = $("emailModal"); if (m) m.classList.add("hidden"); }
+
+function closeEmailModal() { $("emailModal").classList.add("hidden"); }
+function closeSettingsModal() { $("settingsModal").classList.add("hidden"); }
+
 async function copyEmailToClipboard() {
   const text = `To: ${$("emailTo").value}\nSubject: ${$("emailSubject").value}\n\n${$("emailBody").value}`;
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
-    else { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
-    $("copyStatus").textContent = "Copied to clipboard.";
-  } catch (err) { $("copyStatus").textContent = "Could not copy automatically — select and copy manually."; }
-}
-function openInEmailApp() {
-  const to = encodeURIComponent($("emailTo").value);
-  const s = encodeURIComponent($("emailSubject").value);
-  const b = encodeURIComponent($("emailBody").value);
-  window.location.href = `mailto:${to}?subject=${s}&body=${b}`;
+    await navigator.clipboard.writeText(text);
+    $("copyStatus").textContent = "Copied to clipboard!";
+    setTimeout(() => $("copyStatus").textContent = "", 3000);
+  } catch (err) {
+    $("copyStatus").textContent = "Could not copy automatically.";
+  }
 }
 
-/* PDF */
-function addWrapped(doc, text, x, y, maxWidth, lineHeight = 5) {
-  const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
-  doc.text(lines, x, y);
-  return y + lines.length * lineHeight;
+/* ------------------------------ CSV Export ------------------------------ */
+function exportToCSV() {
+  if (!records.length) return showToast("No records to export.", "error");
+  const headers = ["Timestamp", "Full Name", "Email", "Phone", "Pickup", "Return", "Days", "Status", "License No"];
+  const rows = records.map(r => [
+    fmt(r.timestamp), r.fullName, r.email, r.contact, fmt(r.pickupDate), fmt(r.returnDate), r.totalDays, statusOf(r), r.licenseNo
+  ]);
+  const csvContent = [headers, ...rows].map(e => e.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `Rental_Records_${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
+  showToast("CSV Downloaded.", "success");
 }
 
+/* ------------------------------ PDF Generator ------------------------------ */
 function downloadAgreementPdf(r) {
-  if (!window.jspdf || !window.jspdf.jsPDF) { alert("PDF library did not load. Check your connection."); return; }
+  if (!window.jspdf || !window.jspdf.jsPDF) return showToast("PDF library failed to load.", "error");
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight();
@@ -428,21 +595,6 @@ function downloadAgreementPdf(r) {
     doc.text("Renter signature / date", lx, sy + 6);
     doc.text("Owner / representative signature / date", rx, sy + 6);
   }
-  function getTs(rec) { return rec.timestamp || rec.submittedAt; }
-
-  // Restored original Section 5: Complete Agreement Summary
-  function addAgreementSummary() {
-    const termVersion = String(r.termsVersion || "1.0");
-    const recTime = getTs(r);
-    addSectionTitle("5. COMPLETE AGREEMENT SUMMARY");
-    addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"} ...`);
-    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: ${r.fuelLevelOut || "—"}.`);
-    addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"}).`);
-    addParagraph(`Driver's licence: ${r.licenseNo || "—"}; expiry ${formatDate(r.licenseExpiry)}. Government ID: ${r.govIdType || "—"} ${r.govIdNumber || "—"}.`);
-    addParagraph(`Pre-existing damage / notes: ${r.notes || "No additional notes recorded."}`);
-    addParagraph(`Agreed rent (PHP): ${r.agreedRent || "__________________________"}`);
-    addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${formatDateTime(recTime)}. Terms version: ${termVersion}. Status: ${statusOf(r)}.`);
-  }
 
   doc.setFillColor(15, 23, 42); doc.rect(0, 0, pw, 34, "F");
   doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
@@ -457,7 +609,7 @@ function downloadAgreementPdf(r) {
   addField("Address", r.address); addField("Email", r.email);
   addField("Date of birth", formatDate(r.dob)); addField("Driver's licence number", r.licenseNo);
   addField("Licence expiry", formatDate(r.licenseExpiry));
-  addField("Government ID type", r.govIdType); addField("Government ID number", r.govIdNumber);
+  addField("Government ID", `${r.govIdType || "—"} (${r.govIdNumber || "—"})`);
   addField("Emergency contact", `${r.emergencyName || "—"} (${r.emergencyPhone || "—"})`);
   
   y += 2; addSectionTitle("2. RENTAL AND VEHICLE CONDITION");
@@ -465,9 +617,9 @@ function downloadAgreementPdf(r) {
   addField("Pick-up date/time", formatDateTime(r.pickupDate));
   addField("Return date/time", formatDateTime(r.returnDate));
   addField("Total rental days", r.totalDays); 
-  addField("Agreed rent (PHP)", r.agreedRent || "__________________________"); // Restored
+  addField("Agreed rent (PHP)", r.agreedRent || "__________________________");
   addField("Odometer out (km)", r.odometerOut);
-  addField("Fuel level out", r.fuelLevelOut); addField("Pre-existing damage / notes", r.notes);
+  addField("Fuel level out", r.fuelLevelOut); addField("Pre-existing damage", r.notes);
   
   y += 2; addSectionTitle("3. TERMS AND CONDITIONS");
   parseTermsToArray(r.terms || null).forEach(([title, text]) => {
@@ -478,40 +630,101 @@ function downloadAgreementPdf(r) {
   y += 2; addSectionTitle("4. ACKNOWLEDGEMENT");
   addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}`);
   addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical copy or proof of vehicle handover.");
-  addParagraph(`Record timestamp: ${formatDateTime(getTs(r))}  |  Terms version: ${String(r.termsVersion || "1.0")}`);
+  addParagraph(`Record timestamp: ${formatDateTime(r.timestamp)}  |  Terms version: ${String(r.termsVersion || "1.0")}`);
   
-  addAgreementSummary(); // Restored
   addSignatureBlock();
-
   const safeName = String(r.fullName || "renter").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 50);
-  const ts = parseRecordTimestamp(getTs(r));
-  const fileDate = ts ? ts.toLocaleDateString("en-CA", { timeZone: PH_TIMEZONE }) : "record";
-  doc.save(`Rental_Agreement_${safeName}_${fileDate}.pdf`);
+  doc.save(`Rental_Agreement_${safeName}_${new Date(r.timestamp).toLocaleDateString('en-CA')}.pdf`);
 }
 
-/* Events */
+/* -------------------------------- Boot -------------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
   $("appVersion").textContent = APP_VERSION;
-  $("loginForm").addEventListener("submit", async e => {
+  
+  // Check Session Storage
+  const savedKey = sessionStorage.getItem("rentalAdminKey");
+  if (savedKey) {
+    adminKey = savedKey;
+    $("gate").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
+    document.querySelectorAll("header button").forEach(b => b.classList.remove("hidden"));
+    loadRecords();
+  }
+
+  // Login
+  $("loginForm").addEventListener("submit", (e) => {
     e.preventDefault();
-    const key = $("adminKey").value.trim(); if (!key) return;
-    adminKey = key; $("loginStatus").textContent = "";
-    $("gate").classList.add("hidden"); $("dashboard").classList.remove("hidden");
-    await loadRecords();
+    const key = $("adminKey").value.trim();
+    if (!key) return;
+    if ($("rememberMe").checked) sessionStorage.setItem("rentalAdminKey", key);
+    adminKey = key;
+    $("gate").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
+    document.querySelectorAll("header button").forEach(b => b.classList.remove("hidden"));
+    loadRecords();
   });
-  $("refreshBtn").addEventListener("click", loadRecords);
+
+  // Logout
   $("logoutBtn").addEventListener("click", () => {
-    adminKey = ""; records = []; $("adminKey").value = "";
-    $("dashboard").classList.add("hidden"); $("gate").classList.remove("hidden");
-    $("loadStatus").textContent = "Dashboard locked."; closeEmailModal();
+    sessionStorage.removeItem("rentalAdminKey");
+    location.reload();
   });
-  $("searchInput").addEventListener("input", renderRecords);
+
+  $("refreshBtn").addEventListener("click", loadRecords);
+
+  // Filter Tabs
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".filter-btn").forEach(b => {
+        b.className = "filter-btn px-4 py-2 rounded-lg font-bold text-sm bg-white text-slate-600 border";
+      });
+      e.target.className = "filter-btn active-tab px-4 py-2 rounded-lg font-bold text-sm bg-slate-900 text-white";
+      currentFilter = e.target.dataset.filter;
+      renderAll();
+    });
+  });
+
+  // Search & Auto-refresh
+  $("searchInput").addEventListener("input", renderAll);
+  $("autoRefreshToggle").addEventListener("change", (e) => {
+    if (e.target.checked) {
+      autoRefreshInterval = setInterval(loadRecords, 60000);
+      showToast("Auto-refresh enabled (60s).", "info");
+    } else {
+      clearInterval(autoRefreshInterval);
+      showToast("Auto-refresh disabled.", "info");
+    }
+  });
+
+  // Export
+  $("exportCsvBtn").addEventListener("click", exportToCSV);
+
+  // Modals
   $("emailModalClose").addEventListener("click", closeEmailModal);
   $("emailModalClose2").addEventListener("click", closeEmailModal);
   $("copyEmailBtn").addEventListener("click", copyEmailToClipboard);
-  $("openMailBtn").addEventListener("click", openInEmailApp);
+  $("openMailBtn").addEventListener("click", () => {
+    const to = encodeURIComponent($("emailTo").value);
+    const s = encodeURIComponent($("emailSubject").value);
+    const b = encodeURIComponent($("emailBody").value);
+    window.location.href = `mailto:${to}?subject=${s}&body=${b}`;
+  });
+
+  // Settings
+  $("settingsBtn").addEventListener("click", () => {
+    $("emailTemplateText").value = getCustomTemplate();
+    $("settingsModal").classList.remove("hidden");
+  });
+  $("closeSettingsBtn").addEventListener("click", closeSettingsModal);
+  $("saveTemplateBtn").addEventListener("click", () => {
+    localStorage.setItem("rentalEmailTemplate", $("emailTemplateText").value);
+    closeSettingsModal();
+    showToast("Template saved to browser.", "success");
+  });
+  $("resetTemplateBtn").addEventListener("click", () => {
+    $("emailTemplateText").value = DEFAULT_TEMPLATE;
+  });
 });
-console.log("%cOwner Dashboard v" + APP_VERSION + " loaded", "background:#0f172a;color:#0ea5e9;font-weight:bold;padding:2px 6px;border-radius:4px");
 </script>
 </body>
 </html>
