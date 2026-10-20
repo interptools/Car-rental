@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — OWNER DASHBOARD
-  VERSION: 3.2.0 (Deep Audit - Full PDF Restored)
+  VERSION: 3.4.0 (Editable Base Rate Added)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,7 +11,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="app-version" content="3.2.0">
+  <meta name="app-version" content="3.4.0">
   <title>Owner Dashboard | Rental Records</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -146,7 +146,14 @@
         <div class="overflow-x-auto desktop-table">
           <table class="min-w-[1000px] w-full text-sm">
             <thead class="bg-white text-slate-600 border-b">
-              <tr><th>Timestamp</th><th>Renter</th><th>Rental period</th><th>Vehicle</th><th>Status</th><th>Actions</th></tr>
+              <tr>
+                <th>Timestamp</th>
+                <th>Renter</th>
+                <th>Rental period</th>
+                <th>Duration / Est. Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
             </thead>
             <tbody id="recordsBody"><tr><td colspan="6" class="text-center py-4">No records found.</td></tr></tbody>
           </table>
@@ -159,47 +166,33 @@
     </section>
   </main>
 
-  <!-- Hidden HTML agreement template (Restored from original) -->
-  <div id="agreementTemplate" style="display:none;" aria-hidden="true">
-    <article class="agreement bg-white p-6 rounded-lg shadow-sm max-w-3xl mx-auto">
-      <header>
-        <h1 style="font-size:18px;margin:0 0 6px">VEHICLE RENTAL AGREEMENT</h1>
-        <div style="font-size:12px;color:#334155;margin-bottom:12px">MG ZS Lux 2025 | Plate GBJ 3556 | Black</div>
-      </header>
-      <section class="agreement-meta field-grid" style="margin-bottom:12px">
-        <div class="label">Full legal name</div><div class="value">[Full name]</div>
-        <div class="label">Contact number</div><div class="value">[Phone]</div>
-        <div class="label">Address</div><div class="value">[Address]</div>
-        <div class="label">Email</div><div class="value">[Email]</div>
-      </section>
-      <section class="terms" style="margin-bottom:12px">
-        <h2 style="margin:0 0 8px;font-size:14px">Terms and Conditions</h2>
-        <p style="margin:0 0 8px;line-height:1.4">The rented vehicle is an MG ZS Lux 2025...</p>
-      </section>
-      <section class="signature-block">
-        <div class="signature"><div class="sig-line"></div><div class="sig-label">Renter signature / date</div></div>
-        <div class="signature"><div class="sig-line"></div><div class="sig-label">Owner / representative signature / date</div></div>
-      </section>
-    </article>
-  </div>
-
   <!-- ========================================== -->
-  <!-- SETTINGS MODAL (Email Template)            -->
+  <!-- SETTINGS MODAL (Email Template & Base Rate)-->
   <!-- ========================================== -->
   <div id="settingsModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold">Email Template Settings</h3>
+      <div class="flex justify-between items-center mb-4 border-b pb-2">
+        <h3 class="text-xl font-bold">Dashboard Settings</h3>
         <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-800 text-2xl">&times;</button>
       </div>
-      <p class="text-sm text-slate-600 mb-2">Use these placeholders in your template. They will be replaced automatically:</p>
-      <div class="bg-slate-100 p-2 rounded text-xs font-mono mb-4 text-slate-700">
-        {name}, {pickup}, {return}, {days}, {vehicle}, {odometer}, {fuel}
+      
+      <!-- NEW: Editable Base Rate -->
+      <div class="mb-5 bg-slate-50 border rounded-xl p-4">
+        <label class="block text-sm font-bold mb-1" for="baseRateInput">Base Daily Rate (PHP)</label>
+        <input type="number" id="baseRateInput" class="field font-bold text-lg" min="0" step="50" value="2200">
+        <p class="text-xs text-slate-500 mt-1">This rate is used to calculate the suggested total price in the table, emails, and PDFs. Long-term discounts (5%, 10%, 15%) are applied automatically.</p>
       </div>
-      <textarea id="emailTemplateText" class="field flex-1 font-mono text-sm mb-4" style="min-height: 250px;"></textarea>
-      <div class="flex justify-end gap-2">
-        <button id="resetTemplateBtn" class="rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50">Reset Default</button>
-        <button id="saveTemplateBtn" class="rounded-lg bg-sky-600 text-white px-6 py-2 font-bold hover:bg-sky-700">Save Template</button>
+
+      <p class="text-sm font-bold text-slate-700 mb-2">Email Template</p>
+      <p class="text-xs text-slate-600 mb-1">Use these placeholders in your template. They will be replaced automatically:</p>
+      <div class="bg-slate-100 p-2 rounded text-xs font-mono mb-2 text-slate-700 overflow-x-auto whitespace-nowrap">
+        {name}, {pickup}, {return}, {days}, {vehicle}, {odometer}, {fuel}, <strong class="text-sky-600">{estimatedPrice}</strong>
+      </div>
+      <textarea id="emailTemplateText" class="field flex-1 font-mono text-sm mb-4" style="min-height: 200px;"></textarea>
+      
+      <div class="flex justify-end gap-2 pt-2 border-t mt-auto">
+        <button id="resetTemplateBtn" class="rounded-lg border border-slate-300 px-4 py-2 font-semibold hover:bg-slate-50">Reset Defaults</button>
+        <button id="saveTemplateBtn" class="rounded-lg bg-sky-600 text-white px-6 py-2 font-bold hover:bg-sky-700">Save Settings</button>
       </div>
     </div>
   </div>
@@ -240,12 +233,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ============================================================================
-   OWNER DASHBOARD — inline app code (v3.2.0)
+   OWNER DASHBOARD — inline app code (v3.4.0)
    ============================================================================ */
-const APP_VERSION = "3.2.0";
+const APP_VERSION = "3.4.0";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const PH_TIMEZONE = "Asia/Manila";
+
+// Editable Base Rate (Default 2200)
+const DEFAULT_DAILY_RATE = 2200;
+let dailyRate = Number(localStorage.getItem("rentalBaseRate")) || DEFAULT_DAILY_RATE;
 
 const DEFAULT_TEMPLATE = `Hi {name},
 
@@ -256,6 +253,7 @@ Rental summary
 - Pick-up: {pickup}
 - Return: {return}
 - Total rental days: {days}
+- Estimated Total Price: {estimatedPrice} (Security Deposit is separate)
 - Odometer out: {odometer} km
 - Fuel level out: {fuel}
 
@@ -350,6 +348,22 @@ function addWrapped(doc, text, x, y, maxWidth, lineHeight = 5) {
   return y + lines.length * lineHeight;
 }
 
+// NEW: Uses dynamic dailyRate
+function calculateEstimatedPrice(days) {
+  const d = Number(days);
+  if (!d || isNaN(d)) return 0;
+  let total = d * dailyRate;
+  if (d >= 30) total *= 0.85;      // 15% off for 30+ days
+  else if (d >= 7) total *= 0.90;  // 10% off for 7+ days
+  else if (d >= 5) total *= 0.95;  // 5% off for 5+ days
+  return Math.round(total);
+}
+
+function formatPrice(amount) {
+  if (!amount) return "—";
+  return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 function showToast(message, type = "success") {
   const container = $("toastContainer");
   const toast = document.createElement("div");
@@ -437,11 +451,16 @@ function renderAll() {
     const statusBadge = status === "Confirmed" ? `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">CONFIRMED</span>` : `<span class="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold">PENDING</span>`;
     const confirmBtn = status === "Confirmed" ? `<button class="confirmBtn text-amber-600 hover:underline text-xs font-bold" data-row="${r._row}" data-confirm="false">Unconfirm</button>` : `<button class="confirmBtn text-emerald-600 hover:underline text-xs font-bold" data-row="${r._row}" data-confirm="true">Confirm</button>`;
     
+    const estPrice = r.totalDays ? formatPrice(calculateEstimatedPrice(r.totalDays)) : "—";
+
     return `<tr class="hover:bg-slate-50 transition-colors">
       <td class="text-xs text-slate-500">${escapeHtml(fmt(r.timestamp))}</td>
       <td><strong class="text-slate-800">${escapeHtml(r.fullName)}</strong><div class="text-xs text-slate-500">${escapeHtml(r.email)}</div></td>
       <td class="text-xs">${period(r)}</td>
-      <td class="text-xs text-slate-600">${escapeHtml(r.vehicleModel || VEHICLE.model)}</td>
+      <td class="text-xs">
+        <strong class="text-slate-800 text-sm">${r.totalDays || 0} days</strong>
+        <div class="text-emerald-600 font-bold mt-0.5">Est: ${estPrice}</div>
+      </td>
       <td>${statusBadge}</td>
       <td class="space-x-3 whitespace-nowrap">
         ${confirmBtn}
@@ -456,6 +475,7 @@ function renderAll() {
     const idx = records.indexOf(r);
     const status = statusOf(r);
     const statusBadge = status === "Confirmed" ? `<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">CONFIRMED</span>` : `<span class="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold">PENDING</span>`;
+    const estPrice = r.totalDays ? formatPrice(calculateEstimatedPrice(r.totalDays)) : "—";
     
     return `<div class="border rounded-xl p-4 shadow-sm bg-white space-y-3">
       <div class="flex justify-between items-start border-b pb-2">
@@ -468,6 +488,7 @@ function renderAll() {
       <div class="text-sm text-slate-600">
         <p><strong>Dates:</strong> ${period(r)}</p>
         <p><strong>Vehicle:</strong> ${escapeHtml(r.vehicleModel || VEHICLE.model)}</p>
+        <p class="mt-1 font-bold text-slate-800">${r.totalDays || 0} days — <span class="text-emerald-600">Est: ${estPrice}</span></p>
       </div>
       <div class="flex flex-wrap gap-2 pt-2 border-t mt-2">
         <button class="confirmBtn flex-1 text-center py-2 rounded-lg border ${status==="Confirmed"?'border-amber-300 text-amber-700':'bg-emerald-600 text-white'}" data-row="${r._row}" data-confirm="${status!=="Confirmed"}">${status==="Confirmed"?'Unconfirm':'Confirm'}</button>
@@ -577,9 +598,8 @@ async function toggleConfirm(row, isConfirm) {
     const result = await requestJsonp(isConfirm ? "confirm" : "cancel", row);
     if (!result.ok) throw new Error(result.error);
     showToast(`Booking ${verb}ed successfully!`, "success");
-    await loadRecords(); // Reload to refresh status
+    await loadRecords(); 
     
-    // If confirmed, auto-open the email modal
     if (isConfirm) {
       const rec = records.find(r => Number(r._row) === Number(row));
       if (rec) openEmailModal(rec);
@@ -596,6 +616,8 @@ function getCustomTemplate() {
 
 function buildEmailContent(r) {
   const tpl = getCustomTemplate();
+  const estPrice = r.totalDays ? formatPrice(calculateEstimatedPrice(r.totalDays)) : "—";
+  
   return tpl
     .replace(/{name}/g, r.fullName || "Customer")
     .replace(/{pickup}/g, formatDateTime(r.pickupDate))
@@ -603,7 +625,8 @@ function buildEmailContent(r) {
     .replace(/{days}/g, r.totalDays || "—")
     .replace(/{vehicle}/g, `${r.vehicleModel || VEHICLE.model} (${r.vehicleColor || VEHICLE.color}, Plate ${r.vehiclePlate || VEHICLE.plate})`)
     .replace(/{odometer}/g, r.odometerOut || "—")
-    .replace(/{fuel}/g, r.fuelLevelOut || "—");
+    .replace(/{fuel}/g, r.fuelLevelOut || "—")
+    .replace(/{estimatedPrice}/g, estPrice);
 }
 
 function openEmailModal(record) {
@@ -634,9 +657,9 @@ async function copyEmailToClipboard() {
 /* ------------------------------ CSV Export ------------------------------ */
 function exportToCSV() {
   if (!records.length) return showToast("No records to export.", "error");
-  const headers = ["Timestamp", "Full Name", "Email", "Phone", "Pickup", "Return", "Days", "Status", "License No"];
+  const headers = ["Timestamp", "Full Name", "Email", "Phone", "Pickup", "Return", "Days", "Est. Price", "Status", "License No"];
   const rows = records.map(r => [
-    fmt(r.timestamp), r.fullName, r.email, r.contact, fmt(r.pickupDate), fmt(r.returnDate), r.totalDays, statusOf(r), r.licenseNo
+    fmt(r.timestamp), r.fullName, r.email, r.contact, fmt(r.pickupDate), fmt(r.returnDate), r.totalDays, calculateEstimatedPrice(r.totalDays), statusOf(r), r.licenseNo
   ]);
   const csvContent = [headers, ...rows].map(e => e.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -686,17 +709,20 @@ function downloadAgreementPdf(r) {
     return record.timestamp || record.submittedAt || record.createdAt || record.recordedAt;
   }
 
-  // RESTORED: Section 5 Complete Agreement Summary
   function addAgreementSummary() {
     const termVersion = String(r.termsVersion || "1.0");
     const recTime = getRecordTimestamp(r);
+    const estPrice = r.totalDays ? formatPrice(calculateEstimatedPrice(r.totalDays)) : "—";
+    
     addSectionTitle("5. COMPLETE AGREEMENT SUMMARY");
     addParagraph(`This rental agreement is for ${r.vehicleModel || VEHICLE.model}, ${r.vehicleColor || VEHICLE.color}, plate ${r.vehiclePlate || VEHICLE.plate}. The renter, ${r.fullName || "—"} ...`);
-    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)). Odometer out: ${r.odometerOut || "—"} km. Fuel level out: ${r.fuelLevelOut || "—"}.`);
+    addParagraph(`Rental period: ${formatDateTime(r.pickupDate)} to ${formatDateTime(r.returnDate)} (${r.totalDays || "—"} day(s)).`);
+    addParagraph(`Odometer out: ${r.odometerOut || "—"} km. Fuel level out: ${r.fuelLevelOut || "—"}.`);
     addParagraph(`Contact details: ${r.contact || "—"}; Address: ${r.address || "—"}; Email: ${r.email || "—"}. Emergency contact: ${r.emergencyName || "—"} (${r.emergencyPhone || "—"}).`);
     addParagraph(`Driver's licence: ${r.licenseNo || "—"}; expiry ${formatDate(r.licenseExpiry)}. Government ID: ${r.govIdType || "—"} ${r.govIdNumber || "—"}.`);
     addParagraph(`Pre-existing damage / notes: ${r.notes || "No additional notes recorded."}`);
     addParagraph(`Agreed rent (PHP): ${r.agreedRent || "__________________________"}`);
+    addParagraph(`Estimated Total Price (System Suggestion): ${estPrice}`);
     addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${formatDateTime(recTime)}. Terms version: ${termVersion}. Status: ${statusOf(r)}.`);
   }
 
@@ -736,7 +762,7 @@ function downloadAgreementPdf(r) {
   addParagraph("The renter's electronic submission records the acknowledgement selected on the form. This generated copy is a record of the submitted data and is not a substitute for any physical copy or proof of vehicle handover.");
   addParagraph(`Record timestamp: ${formatDateTime(getRecordTimestamp(r))}  |  Terms version: ${String(r.termsVersion || "1.0")}`);
   
-  addAgreementSummary(); // RESTORED
+  addAgreementSummary(); 
   addSignatureBlock();
 
   const safeName = String(r.fullName || "renter").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 50);
@@ -747,7 +773,6 @@ function downloadAgreementPdf(r) {
 document.addEventListener("DOMContentLoaded", () => {
   $("appVersion").textContent = APP_VERSION;
   
-  // Check Session Storage
   const savedKey = sessionStorage.getItem("rentalAdminKey");
   if (savedKey) {
     adminKey = savedKey;
@@ -757,7 +782,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadRecords();
   }
 
-  // Login
   $("loginForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const key = $("adminKey").value.trim();
@@ -770,7 +794,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadRecords();
   });
 
-  // Logout
   $("logoutBtn").addEventListener("click", () => {
     sessionStorage.removeItem("rentalAdminKey");
     location.reload();
@@ -778,7 +801,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $("refreshBtn").addEventListener("click", loadRecords);
 
-  // Calendar Navigation
   $("dashCalPrev").addEventListener("click", () => {
     dashCalMonth--;
     if (dashCalMonth < 0) { dashCalMonth = 11; dashCalYear--; }
@@ -790,7 +812,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderMiniCalendar();
   });
 
-  // Filter Tabs
   document.querySelectorAll(".filter-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       document.querySelectorAll(".filter-btn").forEach(b => {
@@ -802,7 +823,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Search & Auto-refresh
   $("searchInput").addEventListener("input", renderAll);
   $("autoRefreshToggle").addEventListener("change", (e) => {
     if (e.target.checked) {
@@ -814,10 +834,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Export
   $("exportCsvBtn").addEventListener("click", exportToCSV);
 
-  // Modals
   $("emailModalClose").addEventListener("click", closeEmailModal);
   $("emailModalClose2").addEventListener("click", closeEmailModal);
   $("copyEmailBtn").addEventListener("click", copyEmailToClipboard);
@@ -828,19 +846,34 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = `mailto:${to}?subject=${s}&body=${b}`;
   });
 
-  // Settings
+  // Settings Logic (Template + Base Rate)
   $("settingsBtn").addEventListener("click", () => {
     $("emailTemplateText").value = getCustomTemplate();
+    $("baseRateInput").value = dailyRate;
     $("settingsModal").classList.remove("hidden");
   });
+  
   $("closeSettingsBtn").addEventListener("click", closeSettingsModal);
+  
   $("saveTemplateBtn").addEventListener("click", () => {
+    // Save Email Template
     localStorage.setItem("rentalEmailTemplate", $("emailTemplateText").value);
+    
+    // Save Base Rate
+    const newRate = Number($("baseRateInput").value);
+    if (newRate > 0) {
+      dailyRate = newRate;
+      localStorage.setItem("rentalBaseRate", dailyRate);
+    }
+    
     closeSettingsModal();
-    showToast("Template saved to browser.", "success");
+    renderAll(); // Re-render table to update the new estimated prices
+    showToast("Settings saved successfully.", "success");
   });
+  
   $("resetTemplateBtn").addEventListener("click", () => {
     $("emailTemplateText").value = DEFAULT_TEMPLATE;
+    $("baseRateInput").value = DEFAULT_DAILY_RATE;
   });
 });
 </script>
