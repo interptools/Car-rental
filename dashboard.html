@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — OWNER DASHBOARD
-  VERSION: 3.0.1 (Fully Expanded & Audited)
+  VERSION: 3.1.0 (Deep Audited & Calendar Synced)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,7 +11,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="app-version" content="3.0.1">
+  <meta name="app-version" content="3.1.0">
   <title>Owner Dashboard | Rental Records</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -98,12 +98,24 @@
         </div>
       </div>
 
-      <!-- Mini Calendar -->
+      <!-- Enhanced Mini Calendar -->
       <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
-          <h2 class="font-bold text-lg">Confirmed Bookings Calendar</h2>
-          <span class="text-sm text-slate-500" id="miniCalMonth"></span>
+          <h2 class="font-bold text-lg">Bookings Calendar</h2>
+          <div class="flex items-center gap-2">
+            <button type="button" id="dashCalPrev" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-1 text-sm text-slate-600">‹</button>
+            <span class="text-sm font-semibold text-slate-700 min-w-[120px] text-center" id="miniCalMonth"></span>
+            <button type="button" id="dashCalNext" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-1 text-sm text-slate-600">›</button>
+          </div>
         </div>
+        
+        <div class="flex flex-wrap gap-3 mb-3 text-[11px] text-slate-500 justify-center">
+          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gray-200 border border-gray-300"></span>Past</span>
+          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-green-100 border border-green-300"></span>Available</span>
+          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-300"></span>Partially Booked</span>
+          <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-100 border border-red-300"></span>Fully Booked</span>
+        </div>
+
         <div class="grid grid-cols-7 gap-1 text-center text-xs text-slate-500 mb-1 font-bold">
           <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
         </div>
@@ -204,9 +216,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ============================================================================
-   OWNER DASHBOARD — inline app code (v3.0.1)
+   OWNER DASHBOARD — inline app code (v3.1.0)
    ============================================================================ */
-const APP_VERSION = "3.0.1";
+const APP_VERSION = "3.1.0";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const PH_TIMEZONE = "Asia/Manila";
@@ -253,6 +265,7 @@ let records = [];
 let currentFilter = "all";
 let autoRefreshInterval = null;
 let currentEmailRecord = null;
+let dashCalYear, dashCalMonth;
 
 const $ = id => document.getElementById(id);
 
@@ -441,43 +454,88 @@ function renderAll() {
   document.querySelectorAll(".emailBtn").forEach(b => b.addEventListener("click", () => openEmailModal(records[Number(b.dataset.idx)])));
 }
 
+function getDashDayBookingStatus(dateKey) {
+  const now = new Date();
+  const dayStart = new Date(`${dateKey}T00:00:00+08:00`).getTime();
+  const dayEnd = new Date(`${dateKey}T23:59:59+08:00`).getTime();
+  
+  if (dayEnd < now.getTime()) return 'past';
+
+  let hasBookings = false;
+  let intervals = [];
+
+  records.filter(r => statusOf(r) === "Confirmed").forEach(r => {
+    const rStartObj = parseRecordTimestamp(r.pickupDate);
+    const rEndObj = parseRecordTimestamp(r.returnDate);
+    if (!rStartObj || !rEndObj) return;
+    
+    const rStart = rStartObj.getTime();
+    const rEnd = rEndObj.getTime();
+    
+    if (rStart <= dayEnd && rEnd >= dayStart) {
+      hasBookings = true;
+      const startMin = Math.max(0, (rStart - dayStart) / 60000);
+      const endMin = Math.min(1440, (rEnd - dayStart) / 60000);
+      if (startMin < endMin) intervals.push([startMin, endMin]);
+    }
+  });
+
+  if (!hasBookings) return 'available';
+
+  intervals.sort((a, b) => a[0] - b[0]);
+  let merged = [];
+  for (let interval of intervals) {
+    if (merged.length === 0) merged.push(interval);
+    else {
+      let last = merged[merged.length - 1];
+      if (interval[0] <= last[1] + 1) last[1] = Math.max(last[1], interval[1]);
+      else merged.push(interval);
+    }
+  }
+
+  if (merged.length === 1 && merged[0][0] <= 0 && merged[0][1] >= 1440) return 'full';
+  return 'partial';
+}
+
 function renderMiniCalendar() {
   const grid = $("miniCalendarGrid");
   const label = $("miniCalMonth");
   if (!grid || !label) return;
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  label.textContent = new Date(year, month, 1).toLocaleDateString("en-PH", { month: "long", year: "numeric" });
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const startDay = new Date(year, month, 1).getDay();
+  if (dashCalYear === undefined) {
+    const now = new Date();
+    dashCalYear = now.getFullYear();
+    dashCalMonth = now.getMonth();
+  }
 
-  // Build blocked dates map
-  const blocked = new Set();
-  records.filter(r => statusOf(r) === "Confirmed").forEach(r => {
-    const s = parseRecordTimestamp(r.pickupDate);
-    const e = parseRecordTimestamp(r.returnDate);
-    if (!s || !e) return;
-    let cur = new Date(s.getTime());
-    cur.setHours(0,0,0,0);
-    const endD = new Date(e.getTime());
-    endD.setHours(0,0,0,0);
-    while (cur <= endD) {
-      blocked.add(cur.toISOString().slice(0,10));
-      cur.setDate(cur.getDate() + 1);
-    }
-  });
+  label.textContent = new Date(dashCalYear, dashCalMonth, 1).toLocaleDateString("en-PH", { month: "long", year: "numeric" });
+  const daysInMonth = new Date(dashCalYear, dashCalMonth + 1, 0).getDate();
+  const startDay = new Date(dashCalYear, dashCalMonth, 1).getDay();
 
   let html = "";
   for (let i = 0; i < startDay; i++) html += `<div></div>`;
   for (let d = 1; d <= daysInMonth; d++) {
-    const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const isBooked = blocked.has(key);
-    let cls = "p-2 rounded-md ";
-    if (isBooked) cls += "bg-red-100 text-red-700 font-bold border border-red-200";
-    else cls += "text-slate-600 hover:bg-slate-50";
-    html += `<div class="${cls}">${d}</div>`;
+    const key = `${dashCalYear}-${String(dashCalMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const status = getDashDayBookingStatus(key);
+    
+    let cls = "aspect-square flex items-center justify-center rounded text-sm select-none border ";
+    let title = "";
+
+    if (status === 'past') {
+      cls += "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60";
+      title = "Past date";
+    } else if (status === 'full') {
+      cls += "bg-red-100 text-red-800 border-red-300 font-semibold";
+      title = "Fully booked";
+    } else if (status === 'partial') {
+      cls += "bg-amber-100 text-amber-800 border-amber-300 font-semibold";
+      title = "Partially booked";
+    } else {
+      cls += "bg-green-100 text-green-800 border-green-300";
+      title = "Available";
+    }
+    
+    html += `<div class="${cls}" title="${title}">${d}</div>`;
   }
   grid.innerHTML = html;
 }
@@ -671,6 +729,18 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $("refreshBtn").addEventListener("click", loadRecords);
+
+  // Calendar Navigation
+  $("dashCalPrev").addEventListener("click", () => {
+    dashCalMonth--;
+    if (dashCalMonth < 0) { dashCalMonth = 11; dashCalYear--; }
+    renderMiniCalendar();
+  });
+  $("dashCalNext").addEventListener("click", () => {
+    dashCalMonth++;
+    if (dashCalMonth > 11) { dashCalMonth = 0; dashCalYear++; }
+    renderMiniCalendar();
+  });
 
   // Filter Tabs
   document.querySelectorAll(".filter-btn").forEach(btn => {
