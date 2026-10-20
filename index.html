@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — CUSTOMER FORM
-  VERSION: 2.3.1 (Audited Complete Build)
+  VERSION: 2.4.0 (Audited Complete Build)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,7 +11,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <meta name="app-version" content="2.3.1">
+  <meta name="app-version" content="2.4.0">
   <title>Car Rental Agreement | MG ZS Lux 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -31,6 +31,8 @@
       cursor: pointer; box-shadow: 0 6px 18px rgba(2,6,23,0.08); font-size: 12px;
     }
     .ver { font-family: ui-monospace, monospace; font-size: 10px; color: #64748b; }
+    .feature-item { display: flex; align-items: flex-start; gap: 0.5rem; }
+    .feature-icon { color: #0ea5e9; flex-shrink: 0; margin-top: 2px; }
   </style>
 </head>
 <body class="text-slate-800">
@@ -62,6 +64,73 @@
         </div>
       </div>
     </div>
+
+    <!-- Vehicle Features Section -->
+    <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm mb-6">
+      <h2 class="text-lg font-bold mb-4">MG ZS Lux 2025 — Key Features</h2>
+      <p class="text-sm text-slate-600 mb-5">Here is a summary of the features included with your rental vehicle.</p>
+      
+      <div class="grid md:grid-cols-2 gap-x-8 gap-y-6">
+        
+        <!-- Performance -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 border-b pb-2">⚙️ Performance</h3>
+          <ul class="space-y-2 text-sm text-slate-700">
+            <li class="feature-item"><span class="feature-icon">▪</span> 1.5L Naturally Aspirated 4-Cylinder Engine</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> 110 PS Power / 142 Nm Torque</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> CVT Transmission with Manual Tiptronic Mode</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Front-Wheel Drive (FWD)</li>
+          </ul>
+        </div>
+
+        <!-- Exterior -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 border-b pb-2">🚙 Exterior</h3>
+          <ul class="space-y-2 text-sm text-slate-700">
+            <li class="feature-item"><span class="feature-icon">▪</span> 17-inch Two-Tone Tomahawk Design Alloy Wheels</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> London-Eye Halogen Projector Headlamps</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Stardust Grille Design</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Panoramic Sunroof</li>
+          </ul>
+        </div>
+
+        <!-- Interior & Comfort -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 border-b pb-2">🪑 Interior & Comfort</h3>
+          <ul class="space-y-2 text-sm text-slate-700">
+            <li class="feature-item"><span class="feature-icon">▪</span> Leather Style Interior</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Power-Adjustable Driver Seat</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Automatic Climate Control</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Large Boot Space (443L / 1,457L with seats folded)</li>
+          </ul>
+        </div>
+
+        <!-- Technology -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 border-b pb-2">📱 Technology</h3>
+          <ul class="space-y-2 text-sm text-slate-700">
+            <li class="feature-item"><span class="feature-icon">▪</span> 10.25-inch Floating Touchscreen Infotainment</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Apple CarPlay & Android Auto</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> 7-inch Digital Instrument Cluster</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Reverse Camera & Rear Parking Sensors</li>
+          </ul>
+        </div>
+
+        <!-- Safety -->
+        <div class="md:col-span-2">
+          <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3 border-b pb-2">🛡️ Safety</h3>
+          <ul class="grid sm:grid-cols-2 gap-2 text-sm text-slate-700">
+            <li class="feature-item"><span class="feature-icon">▪</span> Dual Front, Side & Curtain Airbags</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> ABS with EBD</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Hill Start Assist</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Tire Pressure Monitoring System</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Engine Immobilizer & Security Alarm</li>
+            <li class="feature-item"><span class="feature-icon">▪</span> Speed-Sensing Door Locks</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
 
     <!-- Availability Calendar Section -->
     <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm mb-6">
@@ -262,9 +331,9 @@
 
 <script>
 /* ============================================================================
-   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.3.1)
+   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.4.0)
    ============================================================================ */
-const APP_VERSION = "2.3.1";
+const APP_VERSION = "2.4.0";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const PH_TIMEZONE = "Asia/Manila";
 
