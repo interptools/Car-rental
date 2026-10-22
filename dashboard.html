@@ -952,7 +952,6 @@ function downloadAgreementPdf(r) {
     addParagraph(`Driver's licence: ${r.licenseNo || "—"}; expiry ${formatDate(r.licenseExpiry)}. Government ID: ${r.govIdType || "—"} ${r.govIdNumber || "—"}.`);
     addParagraph(`Pre-existing damage / notes: ${r.notes || "No additional notes recorded."}`);
     addParagraph(`Agreed rent (PHP): ${r.agreedRent || "__________________________"}`);
-    addParagraph(`Estimated Total Price (System Suggestion): ${estPrice}`);
     addParagraph(`Agreement accepted: ${String(r.agreementAccepted || "No").toUpperCase()}. Record timestamp: ${formatDateTime(recTime)}. Terms version: ${termVersion}. Status: ${statusOf(r)}.`);
   }
 
