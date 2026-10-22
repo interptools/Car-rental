@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — CUSTOMER FORM
-  VERSION: 2.6.0 (Audited Complete Build)
+  VERSION: 3.0.1 (Exhaustive PH ID List & Fully Expanded)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,34 +11,109 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <meta name="app-version" content="2.6.0">
   <title>Car Rental Agreement | MG ZS Lux 2025</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { background: #f1f5f9; }
-    .field { width: 100%; border: 1px solid #cbd5e1; border-radius: .6rem; padding: .65rem .75rem; background: white; }
-    .field:focus { outline: 2px solid #38bdf8; outline-offset: 1px; }
-    label { font-size: .875rem; font-weight: 600; color: #334155; }
-    
-    /* Custom scrollbar for terms */
-    .terms-scroll::-webkit-scrollbar { width: 6px; }
-    .terms-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
-    .terms-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-    .terms-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  
+  <!-- Cache control hints -->
+  <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="expires" content="0">
 
-    @media print {
-      #termsPreview { max-height: none !important; overflow: visible !important; }
-      #termsPreview section { page-break-inside: avoid; }
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    /* Base styles */
+    body { 
+      background: #f1f5f9; 
     }
     
-    #refreshAssetsBtn {
-      position: fixed; right: 14px; bottom: 14px; background: #0ea5e9; color: #012;
-      z-index: 9999; border-radius: 10px; padding: 8px 12px; border: none;
-      cursor: pointer; box-shadow: 0 6px 18px rgba(2,6,23,0.08); font-size: 12px;
+    .field { 
+      width: 100%; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 0.6rem; 
+      padding: 0.65rem 0.75rem; 
+      background: white; 
     }
-    .ver { font-family: ui-monospace, monospace; font-size: 10px; color: #64748b; }
-    .feature-item { display: flex; align-items: flex-start; gap: 0.5rem; }
-    .feature-icon { color: #0ea5e9; flex-shrink: 0; margin-top: 2px; }
+    
+    .field:focus { 
+      outline: 2px solid #38bdf8; 
+      outline-offset: 1px; 
+    }
+    
+    label { 
+      font-size: 0.875rem; 
+      font-weight: 600; 
+      color: #334155; 
+    }
+    
+    /* Ensure print shows full terms instead of the scrollable preview */
+    .terms-print { 
+      display: none; 
+    }
+    
+    @media print {
+      #termsPreview { 
+        max-height: none !important; 
+        overflow: visible !important; 
+      }
+      .terms-print { 
+        display: block !important; 
+      }
+    }
+
+    /* Avoid page-break inside important sections when printing */
+    #termsPreview section { 
+      page-break-inside: avoid; 
+    }
+
+    /* Custom scrollbar for terms */
+    .terms-scroll::-webkit-scrollbar { 
+      width: 6px; 
+    }
+    .terms-scroll::-webkit-scrollbar-track { 
+      background: #f1f5f9; 
+      border-radius: 8px; 
+    }
+    .terms-scroll::-webkit-scrollbar-thumb { 
+      background: #cbd5e1; 
+      border-radius: 8px; 
+    }
+    .terms-scroll::-webkit-scrollbar-thumb:hover { 
+      background: #94a3b8; 
+    }
+
+    /* Small fixed control for forcing cache refresh */
+    #refreshAssetsBtn {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      background: #0ea5e9;
+      color: #012;
+      z-index: 9999;
+      border-radius: 10px;
+      padding: 8px 12px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+      font-size: 12px;
+    }
+    
+    .ver { 
+      font-family: ui-monospace, monospace; 
+      font-size: 10px; 
+      color: #64748b; 
+    }
+    
+    .feature-item { 
+      display: flex; 
+      align-items: flex-start; 
+      gap: 0.5rem; 
+    }
+    
+    .feature-icon { 
+      color: #0ea5e9; 
+      flex-shrink: 0; 
+      margin-top: 2px; 
+    }
   </style>
 </head>
 <body class="text-slate-800">
@@ -74,8 +149,6 @@
     <!-- Vehicle Features Section -->
     <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm mb-6">
       <h2 class="text-lg font-bold mb-4">MG ZS Lux 2025 — Key Features</h2>
-      <p class="text-sm text-slate-600 mb-5">Here is a summary of the features included with your rental vehicle.</p>
-      
       <div class="grid md:grid-cols-2 gap-x-8 gap-y-6">
         
         <!-- Performance -->
@@ -143,7 +216,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <h2 class="text-lg font-bold">Vehicle availability</h2>
-          <p class="text-sm text-slate-600">Select dates below. We'll warn you if your specific times overlap with an existing reservation. (A 1-hour turnaround buffer is required between bookings).</p>
+          <p class="text-sm text-slate-600">Select dates below. A 1-hour turnaround buffer is required between bookings.</p>
         </div>
         <div class="flex items-center gap-2">
           <button type="button" id="calRefresh" class="rounded-lg border border-slate-300 hover:bg-slate-50 px-3 py-2 text-sm">Refresh</button>
@@ -160,7 +233,6 @@
       
       <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
       
-      <!-- Updated Legend -->
       <div class="flex flex-wrap gap-4 mt-4 text-xs text-slate-600">
         <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-gray-200 border border-gray-300"></span>Past</span>
         <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-green-100 border border-green-300"></span>Available</span>
@@ -169,7 +241,6 @@
         <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-sky-600"></span>Your Selection</span>
       </div>
 
-      <!-- Explicit list of unavailable times -->
       <div id="unavailableTimesContainer" class="mt-5 border-t border-slate-200 pt-4 hidden">
         <h3 class="text-sm font-bold text-slate-700 mb-2">⛔ Confirmed Bookings (Unavailable Times)</h3>
         <ul id="unavailableTimesList" class="text-sm text-slate-700 space-y-1 bg-red-50 p-3 rounded-lg border border-red-100"></ul>
@@ -182,7 +253,7 @@
     <!-- Main Form -->
     <form id="rentalForm" class="space-y-6">
       
-      <!-- Section 1 -->
+      <!-- Section 1: Renter Info -->
       <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
         <h2 class="text-lg font-bold mb-4">1. Renter information</h2>
         <div class="grid md:grid-cols-2 gap-4">
@@ -218,11 +289,42 @@
             <label for="govIdType">Government ID type *</label>
             <select class="field mt-1" id="govIdType" name="govIdType" required>
               <option value="">Select ID type</option>
+              <!-- PRIMARY IDS -->
+              <option>PhilSys ID (National ID / ePhilID)</option>
               <option>Philippine Passport</option>
-              <option>UMID</option>
-              <option>PhilHealth ID</option>
-              <option>SSS ID</option>
+              <option>Driver's License (Professional / Non-Pro)</option>
+              <option>UMID (Unified Multi-Purpose ID)</option>
+              
+              <!-- SECONDARY GOVERNMENT IDS -->
+              <option>PRC ID (Professional Regulation Commission)</option>
+              <option>Postal ID (Philippine Postal Corporation)</option>
+              <option>Voter's ID / Voter's Certification</option>
+              <option>PhilHealth ID (PVC or Digital)</option>
+              <option>SSS ID / UMID</option>
               <option>GSIS ID</option>
+              <option>Pag-IBIG Loyalty Card</option>
+              <option>TIN ID (BIR Form 2316 / Digital)</option>
+              
+              <!-- CLEARANCES -->
+              <option>NBI Clearance</option>
+              <option>Police Clearance</option>
+              <option>Barangay ID / Certificate</option>
+              <option>Court Clearance</option>
+              
+              <!-- SPECIAL SECTORS -->
+              <option>Senior Citizen ID</option>
+              <option>PWD ID (Person with Disability)</option>
+              <option>Solo Parent ID</option>
+              <option>OFW ID (OWWA / DMW)</option>
+              <option>Seafarer's Identification and Record Book (SIRB)</option>
+              
+              <!-- FOREIGNERS / OTHERS -->
+              <option>ACR I-Card (Alien Certificate of Registration)</option>
+              <option>Student ID (University / School)</option>
+              <option>Company ID (with photo and signature)</option>
+              <option>Integrated Bar of the Philippines (IBP) ID</option>
+              <option>Firearms License</option>
+              
               <option>Other</option>
             </select>
           </div>
@@ -241,7 +343,7 @@
         </div>
       </section>
 
-      <!-- Section 2 -->
+      <!-- Section 2: Rental Condition -->
       <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
         <h2 class="text-lg font-bold mb-4">2. Rental and vehicle condition</h2>
         <div class="grid md:grid-cols-2 gap-4">
@@ -280,13 +382,50 @@
         <p class="text-xs text-slate-500 mt-3">Rental days are calculated as elapsed time rounded up to a whole day. Confirm the agreed billing rule with the owner if a different rule applies.</p>
       </section>
 
-      <!-- Section 3 -->
+      <!-- Section 3: Terms -->
       <section class="bg-white border border-slate-200 rounded-2xl p-5 md:p-7 shadow-sm">
         <h2 class="text-lg font-bold mb-3">3. Rental agreement terms</h2>
         <p class="text-sm text-slate-600 mb-4">Read the terms below. These are a starter template and should be reviewed for your actual rental operation and applicable Philippine law before use.</p>
         
-        <!-- Scrollable Terms Box -->
-        <div id="termsPreview" class="terms-scroll space-y-4 text-sm leading-6 border border-slate-200 rounded-xl p-4 bg-slate-50 max-h-64 overflow-y-auto"></div>
+        <!-- FULL TERMS HARDCODED EXACTLY AS ORIGINAL -->
+        <div id="termsPreview" class="terms-scroll space-y-4 text-sm leading-6 border border-slate-200 rounded-xl p-4 bg-slate-50 max-h-64 overflow-y-auto">
+          <section>
+            <h3 class="font-bold text-slate-900">Vehicle Details</h3>
+            <p class="text-slate-700">The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement.</p>
+          </section>
+          <section>
+            <h3 class="font-bold text-slate-900">Rental Period</h3>
+            <p class="text-slate-700">The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require prior written approval from the owner and may incur additional charges.</p>
+          </section>
+          <section>
+            <h3 class="font-bold text-slate-900">Fuel Policy</h3>
+            <p class="text-slate-700">The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling is the renter's responsibility unless stated otherwise.</p>
+          </section>
+          <section>
+            <h3 class="font-bold text-slate-900">Renter's Obligations</h3>
+            <p class="text-slate-700">The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, maintain safe driving standards, and ensure all occupants are properly seated and secured.</p>
+          </section>
+          <section>
+            <h3 class="font-bold text-slate-900">Damage / Loss</h3>
+            <p class="text-slate-700">The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, or third-party claims will be determined in line with the agreement and applicable law.</p>
+          </section>
+          <section>
+            <h3 class="font-bold text-slate-900">Security Deposit</h3>
+            <p class="text-slate-700">Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, or unpaid charges will be applied only as agreed.</p>
+          </section>
+          <section>
+            <h3 class="font-bold text-slate-900">Prohibited Use</h3>
+            <p class="text-slate-700">The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's explicit written approval.</p>
+          </section>
+          <section>
+            <h3 class="font-bold text-slate-900">Return Checklist</h3>
+            <p class="text-slate-700">At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges or deductions.</p>
+          </section>
+          <section>
+            <h3 class="font-bold text-slate-900">Privacy and Recordkeeping</h3>
+            <p class="text-slate-700">The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records required for the rental relationship.</p>
+          </section>
+        </div>
         <p class="text-xs text-slate-500 mt-1 text-right">Scroll to read all terms</p>
         
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-5 p-4 rounded-xl border border-sky-200 bg-sky-50 gap-3">
@@ -294,7 +433,7 @@
             <input id="agreementAccepted" name="agreementAccepted" type="checkbox" required class="mt-1 h-5 w-5 accent-sky-600 flex-shrink-0">
             <span class="font-semibold text-sm">I have read, understood, and agree to all terms and conditions of this rental agreement. *</span>
           </label>
-          <button type="button" id="openPrivacyBtn" class="text-sm text-sky-700 font-bold hover:underline whitespace-nowrap self-start sm:self-center">View Data Privacy Notice</button>
+          <button type="button" id="openPrivacyBtn" class="text-sm text-sky-700 font-bold hover:underline self-start sm:self-center">View Data Privacy Notice</button>
         </div>
         <p class="text-xs text-slate-500 mt-2">Only submit information you are authorized to provide. Your details and ID information will be stored in the owner's Google Sheet.</p>
       </section>
@@ -337,7 +476,7 @@
           <li>Government ID Type and Number</li>
           <li>Emergency Contact Details</li>
         </ul>
-        <p><strong>How we use your data:</strong> Your information is used strictly to verify your identity, draft the rental agreement, and contact you regarding your reservation or emergencies. </p>
+        <p><strong>How we use your data:</strong> Your information is used strictly to verify your identity, draft the rental agreement, and contact you regarding your reservation or emergencies.</p>
         <p><strong>Storage & Security:</strong> Your data is securely stored in a restricted Google Sheet. We do not sell or share your data with third parties, except as required by law or insurance claims.</p>
         <p><strong>Retention:</strong> We retain your data only for as long as necessary to fulfill the rental agreement and comply with local laws.</p>
         <p>By checking the agreement box, you consent to the collection and use of your data as described above.</p>
@@ -349,31 +488,23 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- SUCCESS MODAL (SHOWS AFTER SUBMISSION)     -->
+  <!-- SUCCESS MODAL                              -->
   <!-- ========================================== -->
   <div id="successModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl text-center">
-      
-      <!-- Icon -->
       <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
         <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
         </svg>
       </div>
-      
       <h3 class="text-2xl font-bold text-slate-900 mb-2">Request Submitted!</h3>
       <p class="text-slate-600 mb-5">Your rental details have been securely sent to the owner.</p>
-      
-      <!-- Warning Box -->
       <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
         <p class="text-sm text-amber-800 font-medium">
           <strong>⚠️ Important:</strong> Your dates are <em>not yet confirmed</em>. Please watch your inbox and wait for an <strong>email confirmation</strong> from the owner to finalize your reservation.
         </p>
       </div>
-
-      <button id="closeSuccessModal" class="w-full rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 transition-colors">
-        Got it, thanks!
-      </button>
+      <button id="closeSuccessModal" class="w-full rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 transition-colors">Got it, thanks!</button>
     </div>
   </div>
 
@@ -381,72 +512,115 @@
 
 <script>
 /* ============================================================================
-   CUSTOMER FORM + AVAILABILITY CALENDAR — inline app code (v2.6.0)
+   CUSTOMER FORM + AVAILABILITY CALENDAR — FULLY EXPANDED (v3.0.1)
    ============================================================================ */
-const APP_VERSION = "2.6.0";
+const APP_VERSION = "3.0.1";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const PH_TIMEZONE = "Asia/Manila";
-const BUFFER_MINUTES = 60; // 1-hour turnaround buffer
-
-const RENTAL_TERMS = [
-  ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ ****. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement."],
-  ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require prior written approval from the owner and may incur additional charges."],
-  ["Fuel Policy", "The vehicle's departure fuel level is recorded on this agreement. Unless the owner agrees otherwise in writing, the renter must return the vehicle with the same fuel level. Refuelling is the renter's responsibility unless stated otherwise."],
-  ["Renter's Obligations", "The renter confirms that their driver's licence is valid for the rental period and must carry the licence and required vehicle documents while driving. The renter must obey traffic laws, maintain safe driving standards, and ensure all occupants are properly seated and secured."],
-  ["Damage / Loss", "The renter must promptly report any collision, theft, damage, impoundment, or third-party claim and cooperate with lawful reporting and insurance procedures. Responsibility for loss, damage, or third-party claims will be determined in line with the agreement and applicable law."],
-  ["Security Deposit", "Any security deposit amount, payment method, deductions, and refund timeline must be separately disclosed and agreed in writing before handover. Deductions for damage, cleaning, or unpaid charges will be applied only as agreed."],
-  ["Prohibited Use", "The vehicle must not be used for unlawful activity, racing, towing without permission, driving while impaired, carrying prohibited goods, sub-renting, or off-road use without the owner's explicit written approval."],
-  ["Return Checklist", "At return, the parties should record the return date and time, odometer reading, fuel level, visible condition and any new damage, keys and accessories returned, and any agreed charges or deductions."],
-  ["Privacy and Recordkeeping", "The renter understands that the details submitted are used to administer the rental, contact the renter in connection with the rental, document consent, and maintain business records required for the rental relationship."]
-];
+const BUFFER_MINUTES = 60;
 
 /* ------------------------------ Date Helpers ------------------------------ */
 
 function formatPhilippineDate(date = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit"
-  }).format(date).replace(/\//g, "-");
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: PH_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  return formatter.format(date).replace(/\//g, "-");
 }
 
 function formatPhilippineDateTime(date = new Date()) {
-  const parts = new Intl.DateTimeFormat("sv-SE", {
-    timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
-  }).formatToParts(date);
+  const formatter = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: PH_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  });
+  
+  const parts = formatter.formatToParts(date);
   const values = {};
-  for (const part of parts) {
-    if (part.type !== "literal") values[part.type] = part.value;
+  
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (part.type !== "literal") {
+      values[part.type] = part.value;
+    }
   }
-  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
+  
+  const year = values.year;
+  const month = values.month;
+  const day = values.day;
+  const hour = values.hour;
+  const minute = values.minute;
+  const second = values.second;
+  
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}`;
 }
 
 function addManilaOffsetToLocal(local) {
-  if (!local) return "";
+  if (!local) {
+    return "";
+  }
+  
   const s = String(local).trim();
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) return s + ":00+08:00";
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) return s + "+08:00";
+  
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) {
+    return s + ":00+08:00";
+  }
+  
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(s)) {
+    return s + "+08:00";
+  }
+  
   return s;
 }
 
 function manilaDateKey(date) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: PH_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit"
-  }).format(date);
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: PH_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  return formatter.format(date);
 }
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, ch => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
-  }[ch]));
+  const str = String(value);
+  return str.replace(/[&<>"']/g, function(ch) {
+    if (ch === "&") return "&amp;";
+    if (ch === "<") return "&lt;";
+    if (ch === ">") return "&gt;";
+    if (ch === '"') return "&quot;";
+    if (ch === "'") return "&#39;";
+    return ch;
+  });
 }
 
 function formatFriendlyDateTime(isoStr) {
-  if (!isoStr) return "";
+  if (!isoStr) {
+    return "";
+  }
+  
   const d = new Date(isoStr);
-  if (isNaN(d)) return "";
+  if (isNaN(d)) {
+    return "";
+  }
+  
   return d.toLocaleString("en-PH", {
-    timeZone: PH_TIMEZONE, month: "short", day: "numeric", year: "numeric",
-    hour: "numeric", minute: "2-digit", hour12: true
+    timeZone: PH_TIMEZONE,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
   });
 }
 
@@ -458,41 +632,47 @@ let availabilityError = false;
 let calYear, calMonth;
 
 function requestAvailabilityJsonp() {
-  return new Promise((resolve, reject) => {
+  return new Promise(function(resolve, reject) {
     const cb = "__availabilityCallback";
     const prev = window[cb];
     const script = document.createElement("script");
     const url = new URL(APPS_SCRIPT_URL);
     let done = false;
-
-    const cleanup = () => {
-      if (script.parentNode) script.parentNode.removeChild(script);
-      if (prev === undefined) delete window[cb];
-      else window[cb] = prev;
+    
+    const cleanup = function() {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+      if (prev === undefined) {
+        delete window[cb];
+      } else {
+        window[cb] = prev;
+      }
     };
-
-    const timeout = setTimeout(() => {
+    
+    const timeout = setTimeout(function() {
       if (done) return;
-      done = true; cleanup();
+      done = true;
+      cleanup();
       reject(new Error("timeout"));
     }, 15000);
-
-    window[cb] = r => {
+    
+    window[cb] = function(r) {
       if (done) return;
       done = true;
       clearTimeout(timeout);
       cleanup();
       resolve(r);
     };
-
-    script.onerror = () => {
+    
+    script.onerror = function() {
       if (done) return;
       done = true;
       clearTimeout(timeout);
       cleanup();
       reject(new Error("network"));
     };
-
+    
     url.searchParams.set("action", "availability");
     url.searchParams.set("callback", cb);
     url.searchParams.set("_", String(Date.now()));
@@ -503,21 +683,23 @@ function requestAvailabilityJsonp() {
 
 async function loadAvailability() {
   const status = document.getElementById("calStatus");
-  if (status) status.textContent = "Loading availability…";
+  if (status) {
+    status.textContent = "Loading availability…";
+  }
   
   try {
     const result = await requestAvailabilityJsonp();
-    
-    // Filter out any bookings where the end date is in the past
     const allRanges = (result && Array.isArray(result.ranges)) ? result.ranges : [];
     const now = new Date().getTime();
     
-    availabilityRanges = allRanges.filter(range => {
-      if (!range.end) return false;
+    availabilityRanges = allRanges.filter(function(range) {
+      if (!range.end) {
+        return false;
+      }
       const endTimestamp = new Date(range.end).getTime();
-      return !isNaN(endTimestamp) && endTimestamp > now;
+      return endTimestamp > now;
     });
-
+    
     availabilityLoaded = true;
     availabilityError = false;
   } catch (err) {
@@ -534,58 +716,83 @@ async function loadAvailability() {
 function renderUnavailableList() {
   const container = document.getElementById("unavailableTimesContainer");
   const list = document.getElementById("unavailableTimesList");
-  if (!container || !list) return;
-
+  
+  if (!container || !list) {
+    return;
+  }
+  
   if (availabilityRanges.length === 0) {
     container.classList.add("hidden");
     return;
   }
-
-  const sorted = [...availabilityRanges].sort((a, b) => new Date(a.start) - new Date(b.start));
-  list.innerHTML = sorted.map(range => {
+  
+  const sorted = availabilityRanges.slice().sort(function(a, b) {
+    return new Date(a.start) - new Date(b.start);
+  });
+  
+  list.innerHTML = sorted.map(function(range) {
     const start = formatFriendlyDateTime(range.start);
     const end = formatFriendlyDateTime(range.end);
-    return `<li class="flex items-start gap-2"><span class="text-red-500 font-bold">•</span><span><strong>${start}</strong> to <strong>${end}</strong></span></li>`;
+    return '<li class="flex items-start gap-2"><span class="text-red-500 font-bold">•</span><span><strong>' + start + '</strong> to <strong>' + end + '</strong></span></li>';
   }).join("");
+  
   container.classList.remove("hidden");
 }
 
 function getDayBookingStatus(dateKey) {
   const now = new Date();
-  const dayStart = new Date(`${dateKey}T00:00:00+08:00`).getTime();
-  const dayEnd = new Date(`${dateKey}T23:59:59+08:00`).getTime();
+  const dayStart = new Date(dateKey + "T00:00:00+08:00").getTime();
+  const dayEnd = new Date(dateKey + "T23:59:59+08:00").getTime();
   
-  if (dayEnd < now.getTime()) return 'past';
-
+  if (dayEnd < now.getTime()) {
+    return 'past';
+  }
+  
   let hasBookings = false;
   let intervals = [];
-
-  availabilityRanges.forEach(range => {
+  
+  availabilityRanges.forEach(function(range) {
     const rStart = new Date(range.start).getTime();
     const rEnd = new Date(range.end).getTime();
     
     if (rStart <= dayEnd && rEnd >= dayStart) {
       hasBookings = true;
+      
       const startMin = Math.max(0, (rStart - dayStart) / 60000);
       const endMin = Math.min(1440, (rEnd - dayStart) / 60000);
-      if (startMin < endMin) intervals.push([startMin, endMin]);
+      
+      if (startMin < endMin) {
+        intervals.push([startMin, endMin]);
+      }
     }
   });
-
-  if (!hasBookings) return 'available';
-
-  intervals.sort((a, b) => a[0] - b[0]);
+  
+  if (!hasBookings) {
+    return 'available';
+  }
+  
+  intervals.sort(function(a, b) {
+    return a[0] - b[0];
+  });
+  
   let merged = [];
-  for (let interval of intervals) {
-    if (merged.length === 0) merged.push(interval);
-    else {
+  for (let i = 0; i < intervals.length; i++) {
+    let interval = intervals[i];
+    if (merged.length === 0) {
+      merged.push(interval);
+    } else {
       let last = merged[merged.length - 1];
-      if (interval[0] <= last[1] + 1) last[1] = Math.max(last[1], interval[1]);
-      else merged.push(interval);
+      if (interval[0] <= last[1] + 1) {
+        last[1] = Math.max(last[1], interval[1]);
+      } else {
+        merged.push(interval);
+      }
     }
   }
-
-  if (merged.length === 1 && merged[0][0] <= 0 && merged[0][1] >= 1440) return 'full';
+  
+  if (merged.length === 1 && merged[0][0] <= 0 && merged[0][1] >= 1440) {
+    return 'full';
+  }
   
   return 'partial';
 }
@@ -594,50 +801,69 @@ function getSelectedDateSet() {
   const set = new Set();
   const startVal = document.getElementById("pickupDate").value;
   const endVal = document.getElementById("returnDate").value;
-  if (!startVal) return set;
+  
+  if (!startVal) {
+    return set;
+  }
   
   const start = new Date(startVal);
-  if (isNaN(start)) return set;
+  if (isNaN(start)) {
+    return set;
+  }
   
   const sKey = manilaDateKey(start);
   let endKey = sKey;
   
   if (endVal) {
     const end = new Date(endVal);
-    if (!isNaN(end) && end >= start) endKey = manilaDateKey(end);
+    if (!isNaN(end) && end >= start) {
+      endKey = manilaDateKey(end);
+    }
   }
   
   let cur = new Date(sKey + "T00:00:00Z");
   const endD = new Date(endKey + "T00:00:00Z");
+  
   while (cur <= endD) {
     set.add(cur.toISOString().slice(0, 10));
     cur.setUTCDate(cur.getUTCDate() + 1);
   }
+  
   return set;
 }
 
-// Improved Overlap Logic with Buffer
 function rangeOverlapsBlocked(startIso, endIso) {
   const s = new Date(startIso).getTime();
   const e = new Date(endIso).getTime();
-  if (isNaN(s) || isNaN(e) || e <= s) return false;
+  
+  if (isNaN(s) || isNaN(e) || e <= s) {
+    return false;
+  }
   
   const bufferMs = BUFFER_MINUTES * 60000;
   
-  for (const range of availabilityRanges) {
+  for (let i = 0; i < availabilityRanges.length; i++) {
+    const range = availabilityRanges[i];
     const rs = new Date(range.start).getTime();
     const re = new Date(range.end).getTime();
-    if (isNaN(rs) || isNaN(re)) continue;
     
-    // Check standard overlap + add buffer to existing booking end and subtract from existing booking start
-    if (s < (re + bufferMs) && e > (rs - bufferMs)) return true;
+    if (isNaN(rs) || isNaN(re)) {
+      continue;
+    }
+    
+    if (s < (re + bufferMs) && e > (rs - bufferMs)) {
+      return true;
+    }
   }
+  
   return false;
 }
 
 function checkDatesAgainstAvailability() {
   const warning = document.getElementById("datesWarning");
-  if (!warning) return;
+  if (!warning) {
+    return;
+  }
   
   const p = document.getElementById("pickupDate").value;
   const r = document.getElementById("returnDate").value;
@@ -649,7 +875,7 @@ function checkDatesAgainstAvailability() {
   }
   
   if (rangeOverlapsBlocked(addManilaOffsetToLocal(p), addManilaOffsetToLocal(r))) {
-    warning.innerHTML = "⚠️ <strong>Time Conflict:</strong> The times you selected overlap with an existing booking, or fall within the required 1-hour turnaround buffer. Please adjust your times.";
+    warning.innerHTML = "⚠️ <strong>Time Conflict:</strong> Times overlap with a confirmed booking or fall within the 1-hour buffer.";
     warning.classList.remove("hidden");
   } else {
     warning.classList.add("hidden");
@@ -666,42 +892,56 @@ function updateSummary() {
   if (p && r) {
     const days = getRentalDays();
     if (days) {
-      summaryText.innerHTML = `You are requesting <strong>${days} day(s)</strong> from <strong>${formatFriendlyDateTime(addManilaOffsetToLocal(p))}</strong> to <strong>${formatFriendlyDateTime(addManilaOffsetToLocal(r))}</strong>.`;
+      const pFmt = formatFriendlyDateTime(addManilaOffsetToLocal(p));
+      const rFmt = formatFriendlyDateTime(addManilaOffsetToLocal(r));
+      summaryText.innerHTML = "Requesting <strong>" + days + " day(s)</strong> from <strong>" + pFmt + "</strong> to <strong>" + rFmt + "</strong>.";
       summary.classList.remove("hidden");
       return;
     }
   }
+  
   summary.classList.add("hidden");
 }
 
 function renderCalendar() {
   const grid = document.getElementById("calendarGrid");
   const label = document.getElementById("calMonthLabel");
-  if (!grid || !label) return;
+  
+  if (!grid || !label) {
+    return;
+  }
   
   const selected = getSelectedDateSet();
   const todayKey = manilaDateKey(new Date());
   
-  label.textContent = new Date(calYear, calMonth, 1).toLocaleDateString("en-PH", { month: "long", year: "numeric" });
+  label.textContent = new Date(calYear, calMonth, 1).toLocaleDateString("en-PH", {
+    month: "long",
+    year: "numeric"
+  });
+  
   const startDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   
   let html = "";
-  for (let i = 0; i < startDay; i++) html += `<div class="aspect-square"></div>`;
+  
+  for (let i = 0; i < startDay; i++) {
+    html += '<div class="aspect-square"></div>';
+  }
   
   for (let d = 1; d <= daysInMonth; d++) {
-    const key = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const key = calYear + "-" + String(calMonth + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
     const isSelected = selected.has(key);
     const isToday = key === todayKey;
     
     let cls = "aspect-square flex items-center justify-center rounded text-sm select-none ";
     let title = "";
-
+    
     if (isSelected) {
       cls += "bg-sky-600 text-white font-bold ";
       title = "Your selection";
     } else {
       const status = getDayBookingStatus(key);
+      
       if (status === 'past') {
         cls += "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60 ";
         title = "Past date";
@@ -710,27 +950,30 @@ function renderCalendar() {
         title = "Fully booked";
       } else if (status === 'partial') {
         cls += "bg-amber-100 text-amber-800 border border-amber-300 font-semibold ";
-        title = "Partially booked (some times available)";
+        title = "Partially booked";
       } else {
         cls += "bg-green-100 text-green-800 border border-green-300 ";
         title = "Available";
       }
     }
     
-    if (isToday) cls += "ring-2 ring-sky-400 ring-offset-1 ";
+    if (isToday) {
+      cls += "ring-2 ring-sky-400 ring-offset-1 ";
+    }
     
-    html += `<div class="${cls}" title="${title}">${d}</div>`;
+    html += '<div class="' + cls + '" title="' + title + '">' + d + '</div>';
   }
+  
   grid.innerHTML = html;
   
   const status = document.getElementById("calStatus");
   if (status) {
     if (availabilityError) {
-      status.innerHTML = `Availability could not be loaded. <button type="button" onclick="loadAvailability()" class="text-sky-600 font-bold underline ml-1 hover:text-sky-800">Retry</button> or contact the owner.`;
+      status.innerHTML = 'Availability failed. <button onclick="loadAvailability()" class="text-sky-600 font-bold underline">Retry</button>';
     } else if (!availabilityLoaded) {
       status.textContent = "Loading availability…";
     } else {
-      status.textContent = `Calendar updated. Select your precise pick-up and return times below.`;
+      status.textContent = "Calendar updated.";
     }
   }
 }
@@ -740,35 +983,29 @@ function initCalendar() {
   calYear = now.getFullYear();
   calMonth = now.getMonth();
   
-  const prev = document.getElementById("calPrev");
-  const next = document.getElementById("calNext");
-  const refresh = document.getElementById("calRefresh");
-  
-  if (prev) prev.addEventListener("click", () => {
+  document.getElementById("calPrev").addEventListener("click", function() {
     calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
+    if (calMonth < 0) {
+      calMonth = 11;
+      calYear--;
+    }
     renderCalendar();
   });
   
-  if (next) next.addEventListener("click", () => {
+  document.getElementById("calNext").addEventListener("click", function() {
     calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
+    if (calMonth > 11) {
+      calMonth = 0;
+      calYear++;
+    }
     renderCalendar();
   });
   
-  if (refresh) refresh.addEventListener("click", loadAvailability);
+  document.getElementById("calRefresh").addEventListener("click", loadAvailability);
   renderCalendar();
 }
 
-/* ------------------------------ Terms + Form ------------------------------ */
-
-function renderTerms() {
-  const target = document.getElementById("termsPreview");
-  if (!target) return;
-  target.innerHTML = RENTAL_TERMS.map(([h, b]) =>
-    `<section><h3 class="font-bold text-slate-900 mb-1">${escapeHtml(h)}</h3><p class="text-slate-700">${escapeHtml(b)}</p></section>`
-  ).join("");
-}
+/* ------------------------------ Form Logic ------------------------------ */
 
 function getRentalDays() {
   const start = new Date(document.getElementById("pickupDate").value);
@@ -786,15 +1023,19 @@ function getRentalDays() {
 
 function collectFormData(form) {
   const data = Object.fromEntries(new FormData(form).entries());
+  
   data.pickupDate = addManilaOffsetToLocal(data.pickupDate);
   data.returnDate = addManilaOffsetToLocal(data.returnDate);
-  data.timestamp = new Date().toISOString();
+  
+  data.timestamp = formatPhilippineDateTime(new Date());
   data.submittedAt = formatPhilippineDateTime(new Date());
+  
   data.agreementAccepted = document.getElementById("agreementAccepted").checked ? "Yes" : "No";
   data.vehicleModel = "MG ZS Lux 2025";
   data.vehiclePlate = "GBJ 3556";
   data.vehicleColor = "Black";
   data.termsVersion = "1.0";
+  
   return data;
 }
 
@@ -807,16 +1048,12 @@ async function submitRental(event) {
   const originalBtnHTML = button.innerHTML;
   const days = getRentalDays();
   
-  if (!form.reportValidity()) return;
-  
-  if (!days) {
-    status.textContent = "Return date/time must be later than pick-up date/time.";
-    status.className = "text-sm text-red-700";
+  if (!form.reportValidity()) {
     return;
   }
   
-  if (APPS_SCRIPT_URL.includes("PASTE_YOUR")) {
-    status.textContent = "Setup required: add your deployed Apps Script URL.";
+  if (!days) {
+    status.textContent = "Return date/time must be later.";
     status.className = "text-sm text-red-700";
     return;
   }
@@ -824,17 +1061,13 @@ async function submitRental(event) {
   const payload = collectFormData(form);
   
   if (rangeOverlapsBlocked(payload.pickupDate, payload.returnDate)) {
-    status.textContent = "Submission blocked: The selected times overlap with a confirmed reservation or buffer time. Please adjust.";
-    status.className = "text-sm text-red-700 font-semibold"; 
+    status.textContent = "Overlap detected. Please adjust.";
+    status.className = "text-sm text-red-700 font-semibold";
     return;
   }
   
-  // Update Button UI to Loading Spinner
   button.disabled = true;
-  button.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Submitting...`;
-  
-  status.textContent = "Submitting securely to the configured endpoint…";
-  status.className = "text-sm text-slate-600";
+  button.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Submitting...';
   
   try {
     await fetch(APPS_SCRIPT_URL, {
@@ -844,18 +1077,16 @@ async function submitRental(event) {
       body: JSON.stringify(payload)
     });
     
-    status.textContent = "";
-    form.reset(); 
+    form.reset();
     document.getElementById("totalDays").value = "";
     document.getElementById("bookingSummary").classList.add("hidden");
     
-    renderCalendar(); 
+    renderCalendar();
     checkDatesAgainstAvailability();
+    
     document.getElementById("successModal").classList.remove("hidden");
-
   } catch (error) {
-    console.error(error);
-    status.textContent = "Submission could not be sent. Check your connection or contact the owner.";
+    status.textContent = "Submission failed. Check your connection.";
     status.className = "text-sm text-red-700";
   } finally {
     button.disabled = false;
@@ -865,29 +1096,19 @@ async function submitRental(event) {
 
 /* -------------------------------- Boot -------------------------------- */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("appVersion").textContent = APP_VERSION;
-  renderTerms(); 
-  initCalendar(); 
+  
+  initCalendar();
   loadAvailability();
   
   const form = document.getElementById("rentalForm");
   form.addEventListener("submit", submitRental);
   
-  ["pickupDate", "returnDate"].forEach(id => {
-    document.getElementById(id).addEventListener("change", () => {
+  ["pickupDate", "returnDate"].forEach(function(id) {
+    document.getElementById(id).addEventListener("change", function() {
       getRentalDays();
-      
-      const start = document.getElementById("pickupDate").value;
-      const end = document.getElementById("returnDate").value;
-      
-      if (start && end && new Date(end) <= new Date(start)) {
-        document.getElementById("returnDate").setCustomValidity("Return must be later than pick-up.");
-      } else {
-        document.getElementById("returnDate").setCustomValidity("");
-      }
-      
-      renderCalendar(); 
+      renderCalendar();
       checkDatesAgainstAvailability();
       updateSummary();
     });
@@ -896,31 +1117,36 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("dob").max = formatPhilippineDate(new Date());
   document.getElementById("licenseExpiry").min = formatPhilippineDate(new Date());
 
-  // Success Modal Logic
-  document.getElementById("closeSuccessModal").addEventListener("click", () => {
+  document.getElementById("closeSuccessModal").addEventListener("click", function() {
     document.getElementById("successModal").classList.add("hidden");
   });
-
-  // Privacy Modal Logic
+  
   const privacyModal = document.getElementById("privacyModal");
-  document.getElementById("openPrivacyBtn").addEventListener("click", () => privacyModal.classList.remove("hidden"));
-  document.getElementById("closePrivacyBtn").addEventListener("click", () => privacyModal.classList.add("hidden"));
-  document.getElementById("closePrivacyBtn2").addEventListener("click", () => privacyModal.classList.add("hidden"));
+  document.getElementById("openPrivacyBtn").addEventListener("click", function() {
+    privacyModal.classList.remove("hidden");
+  });
+  document.getElementById("closePrivacyBtn").addEventListener("click", function() {
+    privacyModal.classList.add("hidden");
+  });
+  document.getElementById("closePrivacyBtn2").addEventListener("click", function() {
+    privacyModal.classList.add("hidden");
+  });
 });
 
-document.getElementById("refreshAssetsBtn").addEventListener("click", async () => {
+document.getElementById("refreshAssetsBtn").addEventListener("click", async function() {
   try {
     if ("serviceWorker" in navigator) {
       const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map(r => r.unregister()));
+      await Promise.all(regs.map(function(r) { return r.unregister(); }));
     }
     if (window.caches) {
       const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
+      await Promise.all(keys.map(function(k) { return caches.delete(k); }));
     }
   } catch (e) {
     console.warn("Cache clear failed:", e);
   }
+  
   const url = new URL(location.href);
   url.searchParams.set("v", APP_VERSION + "." + Date.now());
   location.replace(url.toString());
