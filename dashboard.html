@@ -2,7 +2,7 @@
 <!--
   ============================================================
   CAR RENTAL — OWNER DASHBOARD
-  VERSION: 3.5.0 (Deep Audited - Partial Availability)
+  VERSION: 3.5.4 (Absolute Full Restore & Deep Audit)
   UPDATED: 2026-10-19
   ============================================================
 -->
@@ -11,12 +11,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="app-version" content="3.5.0">
+  <meta name="app-version" content="3.5.4">
   <title>Owner Dashboard | Rental Records</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   
   <style>
-    /* Base styles */
     body { 
       background: #f1f5f9; 
     }
@@ -24,19 +24,19 @@
     .field { 
       width: 100%; 
       border: 1px solid #cbd5e1; 
-      border-radius: 0.6rem; 
-      padding: 0.65rem 0.75rem; 
+      border-radius: .6rem; 
+      padding: .65rem .75rem; 
       background: white; 
     }
     
     th, td { 
-      padding: 0.8rem 0.9rem; 
+      padding: .8rem .9rem; 
       text-align: left; 
       vertical-align: top; 
       border-bottom: 1px solid #e2e8f0; 
     }
     
-    /* Toast Animations */
+    /* Toast Animation */
     @keyframes slideIn { 
       from { transform: translateX(100%); opacity: 0; } 
       to { transform: translateX(0); opacity: 1; } 
@@ -206,7 +206,9 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="recordsBody"><tr><td colspan="6" class="text-center py-4">No records found.</td></tr></tbody>
+            <tbody id="recordsBody">
+              <tr><td colspan="6" class="text-center py-4">No records found.</td></tr>
+            </tbody>
           </table>
         </div>
 
@@ -218,7 +220,43 @@
   </main>
 
   <!-- ========================================== -->
-  <!-- SETTINGS MODAL (Email Template & Base Rate)-->
+  <!-- HIDDEN HTML AGREEMENT TEMPLATE             -->
+  <!-- (Restored from original v1 for printing)   -->
+  <!-- ========================================== -->
+  <div id="agreementTemplate" style="display:none;" aria-hidden="true">
+    <article class="agreement bg-white p-6 rounded-lg shadow-sm max-w-3xl mx-auto">
+      <header>
+        <h1 style="font-size:18px;margin:0 0 6px">VEHICLE RENTAL AGREEMENT</h1>
+        <div style="font-size:12px;color:#334155;margin-bottom:12px">MG ZS Lux 2025 | Plate GBJ 3556 | Black</div>
+      </header>
+      <section class="agreement-meta field-grid" style="margin-bottom:12px">
+        <div class="label">Full legal name</div><div class="value">[Full name]</div>
+        <div class="label">Contact number</div><div class="value">[Phone]</div>
+        <div class="label">Address</div><div class="value">[Address]</div>
+        <div class="label">Email</div><div class="value">[Email]</div>
+        <div class="label">Date of birth</div><div class="value">October 26, 2000</div>
+        <div class="label">Driver's licence number</div><div class="value">[Licence]</div>
+        <div class="label">Licence expiry</div><div class="value">October 26, 2026</div>
+      </section>
+      <section class="terms" style="margin-bottom:12px">
+        <h2 style="margin:0 0 8px;font-size:14px">Terms and Conditions</h2>
+        <p style="margin:0 0 8px;line-height:1.4">The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter agrees to return the vehicle in the same condition except for reasonable wear and tear. The rental period begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time. Extensions must be agreed in writing. Fuel policy and security deposit terms are the renter's responsibility as separately agreed.</p>
+      </section>
+      <section class="signature-block">
+        <div class="signature">
+          <div class="sig-line" aria-hidden="true"></div>
+          <div class="sig-label">Renter signature / date</div>
+        </div>
+        <div class="signature">
+          <div class="sig-line" aria-hidden="true"></div>
+          <div class="sig-label">Owner / representative signature / date</div>
+        </div>
+      </section>
+    </article>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SETTINGS MODAL                             -->
   <!-- ========================================== -->
   <div id="settingsModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
@@ -227,11 +265,10 @@
         <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-800 text-2xl">&times;</button>
       </div>
       
-      <!-- Editable Base Rate -->
       <div class="mb-5 bg-slate-50 border rounded-xl p-4">
         <label class="block text-sm font-bold mb-1" for="baseRateInput">Base Daily Rate (PHP)</label>
         <input type="number" id="baseRateInput" class="field font-bold text-lg" min="0" step="50" value="2200">
-        <p class="text-xs text-slate-500 mt-1">This rate is used to calculate the suggested total price in the table, emails, and PDFs. Long-term discounts (5%, 10%, 15%) are applied automatically.</p>
+        <p class="text-xs text-slate-500 mt-1">This rate is used to calculate the suggested total price in the table, emails, and PDFs.</p>
       </div>
 
       <p class="text-sm font-bold text-slate-700 mb-2">Email Template</p>
@@ -284,9 +321,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ============================================================================
-   OWNER DASHBOARD — inline app code (v3.5.0)
+   OWNER DASHBOARD — inline app code (v3.5.4)
    ============================================================================ */
-const APP_VERSION = "3.5.0";
+const APP_VERSION = "3.5.4";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrP7bc3q3AVvyuxct1kNY8HxIQBxh7tbvy2Qlvvzs4oon-3lbMtjTe2hJAwaEyTrwH/exec";
 const VEHICLE = { model: "MG ZS Lux 2025", plate: "GBJ 3556", color: "Black" };
 const PH_TIMEZONE = "Asia/Manila";
@@ -319,6 +356,7 @@ Please arrive at the agreed pick-up time. If you need to change the dates, conta
 Thank you,
 [Your name]`;
 
+// FULL TERMS AND CONDITIONS RESTORED
 const TERMS = [
   ["Vehicle Details", "The rented vehicle is an MG ZS Lux 2025, black, registration plate GBJ 3556. The renter must inspect the vehicle and report any pre-existing damage before departure. The renter must not use the vehicle for any purpose other than the agreed rental use and must comply with local traffic law and the rental agreement."],
   ["Rental Period", "The rental begins at the agreed pick-up date and time and ends at the agreed return date and time. The renter must return the vehicle on time to the agreed location. Extensions require prior written approval from the owner and may incur additional charges."],
@@ -344,18 +382,29 @@ const $ = id => document.getElementById(id);
 
 function parseRecordTimestamp(value) {
   if (value === undefined || value === null || value === "") return null;
-  if (typeof value === "string" && /^\d+$/.test(value.trim())) value = Number(value.trim());
-  if (typeof value === "number") { 
-    const ms = value > 1e12 ? value : value * 1000; 
+  let str = String(value).trim();
+  
+  // Strip the single quote that Google Sheets adds
+  if (str.startsWith("'")) str = str.slice(1);
+  
+  if (/^\d+$/.test(str)) str = Number(str);
+  
+  if (typeof str === "number") { 
+    const ms = str > 1e12 ? str : str * 1000; 
     const d = new Date(ms); 
     return isNaN(d.getTime()) ? null : d; 
   }
-  if (typeof value === "string") {
-    let s = value.trim();
-    if (s.startsWith("'")) s = s.slice(1);
-    
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(?:\.\d+)?$/.test(s)) s = s + ":00+08:00".replace(":00+08:00+08:00", ":00+08:00");
-    const d = new Date(s); 
+  
+  if (typeof str === "string") {
+    // If the string is YYYY-MM-DDTHH:mm (no seconds, no timezone)
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(str)) {
+      str = str + ":00+08:00";
+    } 
+    // If the string is YYYY-MM-DDTHH:mm:ss (has seconds, but no timezone)
+    else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(str)) {
+      str = str + "+08:00";
+    }
+    const d = new Date(str); 
     return isNaN(d.getTime()) ? null : d;
   }
   return null;
@@ -392,14 +441,21 @@ function statusOf(r) {
   return s ? s : "Pending"; 
 }
 
-function parseTermsToArray(t) {
-  if (!t) return TERMS;
-  if (Array.isArray(t)) return t;
+function parseTermsToArray(t) { 
+  if (!t) return TERMS; 
+  if (Array.isArray(t)) return t; 
   if (typeof t === "string") { 
     try { const p = JSON.parse(t); if (Array.isArray(p)) return p; } catch(e){} 
-    return [["Terms and Conditions", t]]; 
-  }
-  return TERMS;
+    return [["Terms", t]]; 
+  } 
+  return TERMS; 
+}
+
+// Restored from v1
+function addWrapped(doc, text, x, y, maxWidth, lineHeight = 5) {
+  const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
+  doc.text(lines, x, y);
+  return y + lines.length * lineHeight;
 }
 
 function calculateEstimatedPrice(days) {
@@ -412,16 +468,16 @@ function calculateEstimatedPrice(days) {
   return Math.round(total);
 }
 
-function formatPrice(amount) {
-  if (!amount) return "—";
-  return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function formatPrice(amount) { 
+  if (!amount) return "—"; 
+  return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); 
 }
 
 function formatMinutesToTime(min) {
-  let h = Math.floor(min / 60);
+  let h = Math.floor(min / 60); 
   let m = Math.floor(min % 60);
-  let ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12;
+  let ampm = h >= 12 ? 'PM' : 'AM'; 
+  h = h % 12; 
   if (h === 0) h = 12;
   return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
@@ -433,9 +489,9 @@ function showToast(message, type = "success") {
   toast.className = `toast ${bg} text-white px-6 py-3 rounded-lg shadow-lg font-bold flex items-center gap-2`;
   toast.innerHTML = message;
   container.appendChild(toast);
-  setTimeout(() => {
-    toast.classList.add("toast-hide");
-    setTimeout(() => toast.remove(), 300);
+  setTimeout(() => { 
+    toast.classList.add("toast-hide"); 
+    setTimeout(() => toast.remove(), 300); 
   }, 3000);
 }
 
@@ -463,11 +519,23 @@ function requestJsonp(action, row = null) {
     const script = document.createElement("script");
     const url = new URL(APPS_SCRIPT_URL);
     let done = false;
-    const cleanup = () => { if (script.parentNode) script.parentNode.removeChild(script); delete window[cb]; };
-    const t = setTimeout(() => { if (done) return; done = true; cleanup(); reject(new Error("timeout")); }, 15000);
-    window[cb] = r => { if (done) return; done = true; clearTimeout(t); cleanup(); resolve(r); };
-    script.onerror = () => { if (done) return; done = true; clearTimeout(t); cleanup(); reject(new Error("network")); };
-    
+    const cleanup = () => { 
+      if (script.parentNode) script.parentNode.removeChild(script); 
+      delete window[cb]; 
+    };
+    const t = setTimeout(() => { 
+      if (done) return; 
+      done = true; cleanup(); 
+      reject(new Error("timeout")); 
+    }, 15000);
+    window[cb] = r => { 
+      if (done) return; 
+      done = true; clearTimeout(t); cleanup(); resolve(r); 
+    };
+    script.onerror = () => { 
+      if (done) return; 
+      done = true; clearTimeout(t); cleanup(); reject(new Error("network")); 
+    };
     url.searchParams.set("action", action);
     url.searchParams.set("key", adminKey);
     if (row) url.searchParams.set("row", String(row));
@@ -568,7 +636,6 @@ function renderAll() {
 function getAvailableSlotsForDay(dateKey) {
   const dayStart = new Date(`${dateKey}T00:00:00+08:00`).getTime();
   const dayEnd = new Date(`${dateKey}T23:59:59+08:00`).getTime();
-  
   let blockedIntervals = [];
   
   records.filter(r => statusOf(r) === "Confirmed").forEach(r => {
@@ -582,14 +649,9 @@ function getAvailableSlotsForDay(dateKey) {
     if (rStart <= dayEnd && rEnd >= dayStart) {
       let startMin = Math.max(0, (rStart - dayStart) / 60000);
       let endMin = Math.min(1440, (rEnd - dayStart) / 60000);
-      
-      // Apply 1-hour buffer
       startMin = Math.max(0, startMin - BUFFER_MINUTES);
       endMin = Math.min(1440, endMin + BUFFER_MINUTES);
-      
-      if (startMin < endMin) {
-        blockedIntervals.push([startMin, endMin]);
-      }
+      if (startMin < endMin) blockedIntervals.push([startMin, endMin]);
     }
   });
 
@@ -602,11 +664,8 @@ function getAvailableSlotsForDay(dateKey) {
     if (merged.length === 0) merged.push(interval);
     else {
       let last = merged[merged.length - 1];
-      if (interval[0] <= last[1]) {
-        last[1] = Math.max(last[1], interval[1]);
-      } else {
-        merged.push(interval);
-      }
+      if (interval[0] <= last[1]) last[1] = Math.max(last[1], interval[1]);
+      else merged.push(interval);
     }
   }
 
@@ -615,14 +674,10 @@ function getAvailableSlotsForDay(dateKey) {
   for (let i = 0; i < merged.length; i++) {
     let bStart = merged[i][0];
     let bEnd = merged[i][1];
-    if (bStart > current) {
-      freeIntervals.push([current, bStart]);
-    }
+    if (bStart > current) freeIntervals.push([current, bStart]);
     current = Math.max(current, bEnd);
   }
-  if (current < 1440) {
-    freeIntervals.push([current, 1440]);
-  }
+  if (current < 1440) freeIntervals.push([current, 1440]);
 
   let slots = [];
   let totalMinutes = 0;
@@ -634,7 +689,6 @@ function getAvailableSlotsForDay(dateKey) {
       totalMinutes += (fEnd - fStart);
     }
   }
-
   return { slots, totalHours: (totalMinutes / 60).toFixed(1) };
 }
 
@@ -695,7 +749,6 @@ function renderPartialAvailability() {
     if (getDashDayBookingStatus(key) === 'partial') {
       hasPartial = true;
       const { slots, totalHours } = getAvailableSlotsForDay(key);
-      
       const dateFmt = new Date(dashCalYear, dashCalMonth, d).toLocaleDateString("en-PH", { month: "short", day: "numeric", weekday: "short" });
       
       html += `
@@ -745,19 +798,11 @@ function renderMiniCalendar() {
     let cls = "aspect-square flex items-center justify-center rounded text-sm select-none border ";
     let title = "";
 
-    if (status === 'past') {
-      cls += "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60";
-      title = "Past date";
-    } else if (status === 'full') {
-      cls += "bg-red-100 text-red-800 border-red-300 font-semibold";
-      title = "Fully booked";
-    } else if (status === 'partial') {
-      cls += "bg-amber-100 text-amber-800 border-amber-300 font-semibold";
-      title = "Partially booked";
-    } else {
-      cls += "bg-green-100 text-green-800 border-green-300";
-      title = "Available";
-    }
+    if (status === 'past') { cls += "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60"; title = "Past date"; }
+    else if (status === 'full') { cls += "bg-red-100 text-red-800 border-red-300 font-semibold"; title = "Fully booked"; }
+    else if (status === 'partial') { cls += "bg-amber-100 text-amber-800 border-amber-300 font-semibold"; title = "Partially booked"; }
+    else { cls += "bg-green-100 text-green-800 border-green-300"; title = "Available"; }
+    
     html += `<div class="${cls}" title="${title}">${d}</div>`;
   }
   grid.innerHTML = html;
@@ -784,7 +829,9 @@ async function toggleConfirm(row, isConfirm) {
 
 /* ------------------------------ Email Modal ------------------------------ */
 
-function getCustomTemplate() { return localStorage.getItem("rentalEmailTemplate") || DEFAULT_TEMPLATE; }
+function getCustomTemplate() { 
+  return localStorage.getItem("rentalEmailTemplate") || DEFAULT_TEMPLATE; 
+}
 
 function buildEmailContent(r) {
   const tpl = getCustomTemplate();
@@ -852,7 +899,13 @@ function downloadAgreementPdf(r) {
   const margin = 14, maxWidth = pw - margin * 2, labelWidth = 56;
   let y = 18;
   
-  function ensureSpace(req = 10) { if (y + req > ph - 14) { doc.addPage(); y = 18; } }
+  function ensureSpace(req = 10) { 
+    if (y + req > ph - 14) { 
+      doc.addPage(); 
+      y = 18; 
+    } 
+  }
+  
   function addField(label, value) {
     ensureSpace(8);
     doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.text(`${label}:`, margin, y);
@@ -860,17 +913,20 @@ function downloadAgreementPdf(r) {
     const lines = doc.splitTextToSize(String(value ?? "—"), maxWidth - labelWidth - 4);
     doc.text(lines, margin + labelWidth, y); y += Math.max(5, lines.length * 4);
   }
+  
   function addParagraph(text) {
     const lines = doc.splitTextToSize(String(text ?? "—"), maxWidth);
     ensureSpace(lines.length * 4 + 4);
     doc.setFont("helvetica", "normal"); doc.setFontSize(8);
     doc.text(lines, margin, y); y += lines.length * 4 + 4;
   }
+  
   function addSectionTitle(t) {
     ensureSpace(12);
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text(t, margin, y); y += 6;
     doc.setDrawColor(203, 213, 225); doc.line(margin, y - 2, pw - margin, y - 2); y += 4;
   }
+  
   function addSignatureBlock() {
     const sy = y + 6, lx = margin, rx = pw - margin - 70, len = 70;
     doc.setFont("helvetica", "normal"); doc.setFontSize(8);
@@ -878,8 +934,9 @@ function downloadAgreementPdf(r) {
     doc.text("Renter signature / date", lx, sy + 6);
     doc.text("Owner / representative signature / date", rx, sy + 6);
   }
-  function getRecordTimestamp(record) {
-    return record.timestamp || record.submittedAt || record.createdAt || record.recordedAt;
+  
+  function getRecordTimestamp(record) { 
+    return record.timestamp || record.submittedAt || record.createdAt || record.recordedAt; 
   }
 
   function addAgreementSummary() {
@@ -981,6 +1038,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderMiniCalendar();
     renderPartialAvailability();
   });
+  
   $("dashCalNext").addEventListener("click", () => {
     dashCalMonth++;
     if (dashCalMonth > 11) { dashCalMonth = 0; dashCalYear++; }
@@ -1000,6 +1058,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $("searchInput").addEventListener("input", renderAll);
+  
   $("autoRefreshToggle").addEventListener("change", (e) => {
     if (e.target.checked) {
       autoRefreshInterval = setInterval(loadRecords, 60000);
@@ -1015,6 +1074,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("emailModalClose").addEventListener("click", closeEmailModal);
   $("emailModalClose2").addEventListener("click", closeEmailModal);
   $("copyEmailBtn").addEventListener("click", copyEmailToClipboard);
+  
   $("openMailBtn").addEventListener("click", () => {
     const to = encodeURIComponent($("emailTo").value);
     const s = encodeURIComponent($("emailSubject").value);
